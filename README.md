@@ -1,5 +1,6 @@
 # oracle_backup_recovery
-korea bigbungi exam repository
+
+오라클 백업과 복구 스크립트 총 모음
 
 | 헤더1 | 헤더2 | 헤더3 |
 | --- | --- | --- |
