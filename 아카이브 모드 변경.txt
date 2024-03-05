@@ -1,0 +1,8 @@
+■ 실습.  db 모드를 아카이브 모드로 변환하시오 !
+
+#1. archive  log list 
+#2. shutdown immediate
+#3. startup mount
+#4. alter database archivelog;
+#5. alter  database open;
+#6. archive log list 
