@@ -1,0 +1,151 @@
+
+▣  non system data file을 삭제하고 복구
+
+  data file 의 종류 2가지 ?
+
+   1. system  data file  :   오라클 system 을 운영하기 위해서 반드시 필요한 파일들
+
+       예: system01.dbf,  sysaux01.dbf, undotbs1.dbf
+
+       이 파일들이 손상이 되면 db 가 운영이 안되고 강제로 shutdown 됩니다.
+        복구할 때 db 가 open 된 상태에서 복구 할 수 없고 mount 상태에서 복구
+       해야합니다. 
+
+   2. non system data file  :   일반 사용자 데이터가 저장된 data file 입니다.
+
+     예:  users01.dbf, example01.dbf, ts01.dbf 
+
+     이 파일들이 손상되면 db 가 내려가지는 않는데 해당 테이블들을 select 를 
+     할 수 가 없습니다. 
+     db 를 open 시키고 복구할 수 있습니다.  둘다 됩니다. mount 와 open 상태 둘다
+     복구 가능합니다. 
+
+  건강보험 심사 평가원 --------------------- db 유지보수 업체  현대정보기술
+
+■ 실습1
+
+#0. 아카이브 모드인지 아닌지 확인합니다.
+
+ archive  log  list 
+
+#1. ts02 테이블 스페이스를 생성합니다.
+
+ create  tablespace   ts02
+   datafile  '/u01/app/oracle/oradata/yys/ts02.dbf'  size 10m;
+
+#2. ts02 테이블 스페이스의 data file 을 hot backup 받습니다.(점심시간 문제)
+
+  백업된것 보여주시고 검사받고 식사하러가세요. 라인 검사입니다.
+
+#3. ts02 테이블 스페이스에 emp05 라는 테이블을 scott 유져에서 생성합니다.
+
+yys(SCOTT) > create table emp05
+                  tablespace  ts02
+                 as
+                  select * from emp;
+
+yys(SCOTT) > select  count(*) from emp05;
+
+
+#4. 로그 스위치를 수동으로 3번 일으킵니다.( db 를 좀 운영 시킵니다.)
+
+로그 스위치(log switch)  --> LGWR 가 현재 쓰고 있는 리두로그 파일 말고
+                                    다음번 리두로그 파일을 쓰겠금 하는거
+
+alter  system  switch  logfile;
+save  logsw.sql
+
+#5. ts02.dbf 파일을 os 에서 rm 으로 날립니다.
+
+yys(SYS) > @datafile
+
+[yys:~]$ cd /u01/app/oracle/oradata/yys
+
+[yys:yys]$ rm ts02.dbf  <--- 오라클 모르게 지운것 입니다.
+
+장애상황이고 media failure 라고 합니다. (ocp 문제)
+data file 이 없으니까 emp05는 select 가 안될것이고 그리고 db 를 내렸다 올리면
+안올라오는 현상이 일어납니다. 
+
+yys(SCOTT) > select count(*) from emp05;
+
+  COUNT(*)
+----------
+        14
+
+ts02.dbf 지웠지만 이렇게 select 가 되는 이유는 메모리에 emp05 가 있기 때문입니다.
+메모리를 지우는 명령어를 다음과 같이 수행해보세요.
+
+sys> alter  system  flush  buffer_cache;
+sys> alter  system  flush  shared_pool;
+
+yys(SCOTT) > select count(*)
+  2   from emp05;
+ from emp05
+      *
+ERROR at line 2:
+ORA-01116: error in opening database file 7
+ORA-01110: data file 7: '/u01/app/oracle/oradata/yys/ts02.dbf'
+ORA-27041: unable to open file
+Linux Error: 2: No such file or directory
+
+#6. db 를 shutdown abort 를 내리고 starutp 합니다. 
+
+yys(SYS) > shutdown abort
+ORACLE instance shut down.
+
+yys(SYS) > startup
+
+ORA-01157: cannot identify/lock data file 7 - see DBWR trace file
+ORA-01110: data file 7: '/u01/app/oracle/oradata/yys/ts02.dbf'
+
+※ 복구하는 방법 !   1. 손상된 data file 번호를 확인합니다.
+                          2. 손상된 data file 이름도 확인합니다.
+
+#7. mount 상태에서 db 가 안올라가는것을 확인합니다. 
+#8. 백업받는 ts02.dbf 파일을 복원합니다.
+
+[yys:~]$ cd hotbackup
+[yys:hotbackup]$
+[yys:hotbackup]$ ls
+
+[yys:hotbackup]$ cp ts02.dbf  /u01/app/oracle/oradata/yys/ts02.dbf
+
+백업받은 파일을 원본의 위치에 copy 하는게 복원(restore) 입니다. 
+
+#9. 복원한 ts02.dbf 파일에 아카이브 로그 파일을 적용해서 복구합니다.
+
+ 지금 복원한 백업 파일은 2시간전 파일입니다.  그래서 최신 파일로 만들어줘야합니다.
+ 최신 파일로 만들어주기 위해서 복원 파일에 아카이브 로그 파일을 적용해서
+ 복구를 하겠습니다. 
+
+yys(SYS) > recover datafile 7;
+
+ 뭐 메세지 나오는것은 아카이브 로그파일 적용할거냐고 물어보는것입니다.
+ 그냥 엔터 치면 됩니다. 
+
+Media recovery complete.  <----  복구가 완료된것입니다.
+
+#10. db open 시킵니다.
+
+yys(SYS) > alter database open;
+
+#11. emp05 테이블이 잘 조회되는지 확인합니다.
+
+yys(SCOTT) > select count(*)
+  2   from emp05;
+
+  COUNT(*)
+----------
+        14
+
+문제1.  ts03 테이블 스페이스를 사이즈 5m 로 생성하시오 !
+
+문제2.  ts03 테이블 스페이스를 hot backup 하시오 !
+
+문제3. ts03 테이블 스페이스에 dept 테이블과 똑같은 테이블을 dept03 이라는
+        이름으로 생성하시오 !
+
+문제4. 로그 스위치를 3번 일으키고  ts03.dbf 를 os 에서 삭제하시오 !
+
+문제5. 위의 장애상황을 해결하시오 ! ( 복원+복구)
