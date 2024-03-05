@@ -1,0 +1,75 @@
+▣ 사용자 관리 hot backup 수행하기
+
+  백업 :  1.  사용자 관리 백업 :  사용자가 일일히 백업해야할 파일들을 찾아서 
+                                          OS 의 COPY 명령어로 백업하는것 
+
+                      1.1.  cold  backup :  db 를 shutdown 하고 백업
+                      1.2.   hot  backup :  db 운영중에 백업
+
+            2.  RMAN 을 이용한 백업 :  Rman 이라는 툴을 통해서 명령어 1~2개로 쉽게 백업하는것 
+
+■ 실습
+
+#1.  테이블 스페이스들을 모두 백업 모드로 변경합니다.
+
+ ※ 백업 모드로 변경한다는것은 ?     
+     
+     테이블 스페이스에 속한 data file 들의 checkpoint 정보가
+     갱신되지 않는 상태가 됩니다. 대신 data 를 변경이 가능합니다.
+
+SQL>@tablespace
+SQL> select  * from  v$backup;
+SQL> alter  tablespace  system  begin  backup;
+SQL> alter  tablespace  undotbs1  begin backup;
+SQL> alter  tablespace  sysaux  begin  backup;
+SQL> alter  tablespace  example  begin backup;
+SQL> alter  tablespace  users  begin backup;
+
+#2.  백업모드 변경되었는지 확인합니다.
+
+SQL> select  * from v$backup;
+
+#3.  os 에서 data file들을 백업 합니다.
+
+SQL> @datafile
+/u01/app/oracle/oradata/yys/users01.dbf
+/u01/app/oracle/oradata/yys/undotbs01.dbf
+/u01/app/oracle/oradata/yys/sysaux01.dbf
+/u01/app/oracle/oradata/yys/system01.dbf
+/u01/app/oracle/oradata/yys/example01.dbf
+
+$ cd
+$ mkdir  hotbackup
+$ 
+cp /u01/app/oracle/oradata/yys/users01.dbf   /home/oracle/hotbackup/users01.dbf
+cp /u01/app/oracle/oradata/yys/undotbs01.dbf  /home/oracle/hotbackup/undotbs01.dbf 
+cp /u01/app/oracle/oradata/yys/sysaux01.dbf  /home/oracle/hotbackup/sysaux01.dbf 
+cp /u01/app/oracle/oradata/yys/system01.dbf  /home/oracle/hotbackup/system01.dbf 
+cp /u01/app/oracle/oradata/yys/example01.dbf  /home/oracle/hotbackup/example01.dbf
+
+$ cd /home/oracle/hotbackup
+$ ls 
+
+※ backup 모드 일때 db 가 갑자기 내려가면 다시 db 올릴때 db 가 안올라갑니다.
+   그 조치사항은 뒤에서 알려드립니다.
+
+#4.  테이블 스페이스들을 일반모드로 변경합니다.
+
+SQL> alter  tablespace   테이블 스페이스 이름 end  backup;
+
+SQL> select  * from  v$backup;
+SQL> alter  tablespace  system  end  backup;
+SQL> alter  tablespace  undotbs1  end backup;
+SQL> alter  tablespace  sysaux  end  backup;
+SQL> alter  tablespace  example  end backup;
+SQL> alter  tablespace  users  end  backup;
+
+#5. 일반 모드로 변경되었는지 확인합니다. 
+
+SQL> select * from v$backup;
+
+문제.  ts01 이라는 테이블 스페이스를 만들고 이 테이블 스페이스의
+        data file을 hot backup 하시오 !
+
+create  tablespace  ts01
+  datafile '/u01/app/oracle/oradata/yys/ts01.dbf'   size  10m;
