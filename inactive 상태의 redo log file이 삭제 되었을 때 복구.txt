@@ -1,0 +1,94 @@
+
+▣  inactive 상태의 redo log file이 삭제 되었을 때 복구  
+
+  * 리두로그 파일? (redo logfile)
+                          ↓
+                   다시 작업하다.  다시 작업하기위한 로그 파일입니다.
+                   즉, 복구를 하기 위해서 필요한 데이터가 있는 파일입니다. 
+
+     select 만 빼고 insert,update, delete, merge, create, alter ,drop, truncate 등의
+     명령어들이 이 안에 들어있습니다.
+
+ * 리두 로그 파일의 상태 4가지 ?
+ 
+   1. current  :  LGWR 가 현재 쓰고 있는 상태 
+   2. active :     LGWR 가 다 썼고 쓴 내용에 대한 메모리의 변경사항들이
+                    datafile 로 반영이 안된상태 
+   
+  3. inactive :  LGWR 가 다 내려썼고 메모리의 변경사항이 DATA FILE 에 다 반영된 상태
+  4. unused :  LGWR 가 한번도 사용하지 않은 상태
+
+ 그림에 나오는 3개의 파일이 순환해서 사용되어지는 것입니다.
+
+■ 실습:
+#순서:
+#1.  리두 로그 그룹의 상태를 확인합니다.
+#2.  로그 스위치를 1번 일으킵니다.
+#3.  체크 포인트를 1번 일으킵니다.
+#4.  리두 로그 그룹의 상태를 확인합니다.
+#5.  리두 로그 그룹중 inactive 상태인 리두 로그 그룹의 멤버를 확인합니다.
+#6.  shutdown abort 로 내립니다.
+#7.  os 에서 inactive 상태의 로그 그룹 멤버를 rm 으로 지웁니다.
+     (※ 이때 active 나 current 를 지우지 않게 주의해야합니다.)
+#8.  db 를 startup 합니다.( mount 에서 안올라갑니다.)
+#9.  rm 으로 날린 inactive 상태의 리두로그 그룹을 controlfile 에서 지웁니다.
+#10. alter database open 으로 db 를 올립니다.
+#11. 지워진 리두 로그 그룹을 새로 추가합니다.
+
+#구현:
+#1.  리두 로그 그룹의 상태를 확인합니다.
+
+select  group#, status, sequence#  from  v$log;
+
+#2.  로그 스위치를 1번 일으킵니다.
+
+alter  system  switch  logfile;
+
+#3.  체크 포인트를 1번 일으킵니다.
+
+alter  system checkpoint;
+
+#4.  리두 로그 그룹의 상태를 확인합니다.
+
+select  group#, status, sequence#  from  v$log;
+
+
+    GROUP# STATUS            SEQUENCE#
+---------- ---------------- ----------
+         1 CURRENT                   4
+         2 INACTIVE                  2
+         3 INACTIVE                  3
+
+
+#5.  리두 로그 그룹중 inactive 상태인 리두 로그 그룹의 멤버를 확인합니다.
+
+select  group#, member from v$logfile;
+
+그룹: 논리적인 단위
+멤버: os 에 눈에 보이는 파일 
+
+#6.  shutdown abort 로 내립니다.
+
+#7.  os 에서 inactive 상태의 로그 그룹 멤버를 rm 으로 지웁니다.
+     (※ 이때 active 나 current 를 지우지 않게 주의해야합니다.)
+
+$ rm redo0?.log
+
+#8.  db 를 startup 합니다.( mount 에서 안올라갑니다.)
+#9.  rm 으로 날린 inactive 상태의 리두로그 그룹을 controlfile 에서 지웁니다.
+yys(SYS) > exit;
+$ ss
+yys(SYS) > startup mount
+
+alter  database  drop   logfile   group  그룹번호;
+
+#10. alter database open 으로 db 를 올립니다.
+
+alter  database  open;
+
+#11. 지워진 리두 로그 그룹을 새로 추가합니다.
+
+alter  database  add  logfile  group  그룹번호
+'/u01/app/oracle/oradata/yys/redo0?.log'   size 5m;
+
+yys(SYS) > select group#, status, sequence# from v$log;
