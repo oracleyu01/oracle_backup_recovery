@@ -1,0 +1,65 @@
+■  cold backup 수행하기
+
+- 순서:
+
+#1. data file 의 위치를 확인합니다.
+#2. controlfile 의 위치를 확인합니다.
+#3. redo log file 의 위치를 확인합니다.
+#4. coldbackup 이라는 폴더를 생성합니다.
+#5. db 를 정상 종료 합니다.
+#6. 원본 datafile,controlfile,redo logfile 을  백업합니다.
+#7. 백업이 정확히 잘 되었는지 확인합니다.
+#8. DB를 startup 합니다.
+
+
+- 구현:
+
+#1. data file 의 위치를 확인합니다.
+
+sys> select  file_name from dba_data_files;
+
+sys> save datafile.sql
+
+sys> @datafile.sql
+
+#2. controlfile 의 위치를 확인합니다.
+
+sys> select name from v$controlfile;
+
+sys> save controlfile.sql
+
+sys> @controlfile.sql
+
+#3. redo log file 의 위치를 확인합니다.
+
+sys> select group#, member
+        from v$logfile
+        order by group#;
+
+sys> save logfile.sql
+
+sys> @logfile.sql
+
+#4. coldbackup 이라는 폴더를 생성합니다.
+
+$ cd
+$ mkdir coldbackup
+
+#5. db 를 정상 종료 합니다.
+
+sys> shutdown immediate
+
+#6. 원본 datafile,controlfile,redo logfile 을  백업합니다.
+
+$ cd /u01/app/oracle/oradata/yys
+$ cp *  /home/oracle/coldbackup/
+$ cd /home/oracle/coldbackup
+$ ls
+
+#7. DB를 startup 합니다.  
+
+sys> startup
+
+
+
+
