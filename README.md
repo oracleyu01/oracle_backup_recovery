@@ -36,7 +36,7 @@
   
 - **system data file을 삭제하고 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/system%20%20data%20file%20%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC%20%ED%95%98%EA%B8%B0.txt)
 
-- **모든 data file들을 전부 삭제하고 복구**: [관련 코드](링크)
+- **모든 data file들을 전부 삭제하고 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%AA%A8%EB%93%A0%20data%20file%EB%93%A4%EC%9D%84%20%EC%A0%84%EB%B6%80%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC.txt)
  
 - **control file이 삭제되었을 때 복구**: [관련 코드](링크)
 
