@@ -1,0 +1,41 @@
+▣ multiplexing 된 controlfile 중에 1개를 삭제하고 복구 
+
+■ 실습
+
+순서:
+#1.  control file 이 몇개가 있는지 확인합니다.
+#2.  shutdown abort 로 db 를 내립니다.
+#3.  os 에서 control01.ctl 을 삭제합니다.
+#4.  startup 합니다.(nomount 에서 안올라갑니다.)
+#5.  다시 shutdown abort 로 내립니다. 
+#6.  os 에서 control02.ctl 을 복사해서 control01.ctl 로 붙여넣습니다.
+#7.  startup
+
+구현:
+#1.  control file 이 몇개가 있는지 확인합니다.
+SQL>  select  name  from v$controlfile;
+
+#2.  shutdown abort 로 db 를 내립니다.
+#3.  os 에서 control01.ctl 을 삭제합니다.
+
+[yys:~]$ oradata
+[yys:yys]$ pwd
+/u01/app/oracle/oradata/yys
+[yys:yys]$ rm control01.ctl
+
+#4.  startup 합니다.(nomount 에서 안올라갑니다.)
+#5.  다시 shutdown abort 로 내립니다. 
+
+#6.  os 에서 control02.ctl 을 복사해서 control01.ctl 로 붙여넣습니다.
+
+[yys:yys]$ cp control02.ctl control01.ctl
+
+#7.  startup
+
+yys(SYS) > select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/yys/control01.ctl
+/u01/app/oracle/oradata/yys/control02.ctl
+/u01/app/oracle/oradata/yys/control03.ctl
