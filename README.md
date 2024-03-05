@@ -40,6 +40,29 @@
  
 - **control file이 삭제되었을 때 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/control%20file%EC%9D%B4%20%EC%82%AD%EC%A0%9C%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC.txt)
 
+- **contol file 을  multiplexing 하기**: [관련 코드]()
+
+- **multiplexing 된 controlfile 중에 1개를 삭제하고 복구**: [관련 코드]()
+ 
+- **inactive 상태의 redo log file이 삭제 되었을 때 복구**: [관련 코드]()
+
+- **redo log file 의 다중화 하기**: [관련 코드]()
+
+- **redo log group 의 멤버 삭제하기**: [관련 코드]()
+
+- **redo log group 추가하기**: [관련 코드]()
+
+- **redo log group 삭제하기**: [관련 코드]()
+
+- **다중화 된 상태에서 inactive 리두 로그 멤버 1개를 손상시키기**: [관련 코드]()
+
+- **그룹의 모든 멤버를 삭제되었을때 복구하는 방법**: [관련 코드]()
+
+### 3. 불완전 복구하기
+
+- **time base 불완전 복구 수행하기**: [관련 코드]()
+
+
 
 ---
 
