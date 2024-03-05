@@ -1,0 +1,166 @@
+▣ 모든 data file들을 전부 삭제하고 복구
+
+면접질문으로 많이 물어보는 질문: 완전 복구와 불완전 복구의 차이 ?
+
+ * 완전 복구란 ?  장애가 나기전 마지막 commit 시점으로 데이터를 복구
+ * 불완전 복구란?  과거의 특정 시점으로 복구
+
+ 가급적 완전 복구를 하는게 제일 좋은데 특별한 사정에 의해서 완전복구를 못하게 되면
+ 불완전 복구를 해야합니다.
+
+■ 실습:
+
+#0. yys db 로 접속합니다.
+
+#1. hot 백업을 수행합니다.
+
+#1.1 hot 백업 수행하기 위해 begin backup 스크립트 추출
+
+select ' alter   tablespace  ' || tablespace_name || ' begin  backup;'
+ from   dba_tablespaces
+ where  tablespace_name  != 'TEMP';
+
+ alter  tablespace SYSTEM begin backup;
+ alter  tablespace SYSAUX begin backup;
+ alter  tablespace UNDOTBS1 begin backup;
+ alter  tablespace USERS begin backup;
+ alter  tablespace EXAMPLE begin backup;
+ alter  tablespace TS01 begin backup;
+ alter  tablespace TS02 begin backup;
+ alter  tablespace CUPPANG01 begin backup;
+ alter  tablespace CUPPANG02 begin backup;
+ alter  tablespace CUPPANG03 begin backup;
+
+#1.2  백업 모드에 있는지 확인
+
+select  * from v$backup;
+
+#1.3 os 에서 data file 을 copy 합니다.
+
+$ mkdir  /home/oracle/hot_20240304
+
+select  'cp  ' ||  file_name  || ' /home/oracle/hot_20240304/'   
+  from  dba_data_files;
+
+cp  /u01/app/oracle/oradata/yys/ts01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/example01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/users01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/undotbs01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/sysaux01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/system01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/ts02.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/cuppang01.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/cuppang02.dbf /home/oracle/hot_20240304/
+cp  /u01/app/oracle/oradata/yys/cuppang03.dbf /home/oracle/hot_20240304/
+
+#1.4  end backup 을 수행하는 스크립트 추출
+
+select ' alter   tablespace  ' || tablespace_name || ' end  backup;'
+ from   dba_tablespaces
+ where  tablespace_name  != 'TEMP';
+
+alter   tablespace  SYSTEM end  backup;
+ alter   tablespace  SYSAUX end  backup;
+ alter   tablespace  UNDOTBS1 end  backup;
+ alter   tablespace  USERS end  backup;
+ alter   tablespace  EXAMPLE end  backup;
+ alter   tablespace  TS01 end  backup;
+ alter   tablespace  TS02 end  backup;
+ alter   tablespace  CUPPANG01 end  backup;
+ alter   tablespace  CUPPANG02 end  backup;
+ alter   tablespace  CUPPANG03 end  backup;
+
+#1.5 일반 모드로 변경되었는지 확인
+
+select * from v$bakcup;
+
+#2. scott 유져에서  테이블을 생성합니다.
+
+yys(SYS) > connect scott/tiger
+
+yys(SCOTT) > create table emp_cuppang
+              tablespace ts01
+              as
+              select * from emp;
+
+#3. 데이터를 입력하고 로그 스위치를 여러번 일으킵니다.
+
+insert  into emp_cuppang
+select  *
+  from emp_cuppang;
+
+alter  system switch  logfile; 
+
+위의 작업을 3번 하세요 ~
+
+#4. db 를 내리고 모든 data file들을 전부 삭제합니다.
+
+yys(SCOTT) > connect / as sysdba
+
+yys(SCOTT) > select file_name from dba_data_files;
+
+[yys:~]$ cd /u01/app/oracle/oradata/yys/
+
+$ rm *.dbf  <--  확장자가  .dbf 로 끝나는 파일들을 지웁니다.
+
+[yys:yys]$ ls
+
+db shutdown abort 합니다. 
+
+
+#5. db 를 startup 합니다.
+
+yys(SYS) > startup
+ORACLE instance started.
+
+Total System Global Area  636100608 bytes
+Fixed Size                  1338392 bytes
+Variable Size             264242152 bytes
+Database Buffers          364904448 bytes
+Redo Buffers                5615616 bytes
+Database mounted.
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/yys/system01.dbf'
+
+* 복구해야하는 파일들을 보여달라 !
+
+yys(SYS) >  select * from v$recover_file;
+
+yys(SYS) > select  r.file#, d.name
+                from v$recover_file   r, v$datafile  d
+                where  r.file# = d.file#
+                and  error='FILE NOT FOUND';
+
+yys(SYS) > save need_recovery.sql
+
+#6. 백업 받은 파일들을 복원합니다.
+
+$ cd 
+$ cd hot_20240304
+$ cp *.dbf  /u01/app/oracle/oradata/yys/
+
+#7. 복원한 파일에 로그 파일을 적용해서 완전 복구를 합니다.
+
+SQL> recover  database;
+
+Specify log: {<RET>=suggested | filename | AUTO | CANCEL}
+auto <--- 이렇게 적으면 알아서 아카이브 로그 파일을 복원한 파일에 적용합니다. 
+
+Media recovery complete.
+yys(SYS) > alter database open;
+
+#8. scott 유져에서 생성한 테이블을 select 합니다.
+
+yys(SYS) > connect scott/tiger
+Connected.
+yys(SCOTT) >
+yys(SCOTT) > select count(*) from emp_cuppang;
+
+  COUNT(*)
+----------
+       112
+
+정리:    모든 data file 들을 전부 삭제를 하는 장애가 발생했습니다.
+          controfile 과 redo logfile 은 있습니다.
+          이런 경우는 백업받은 모든 data file 들을 다 복원해 와서 
+          아카이브 로그 파일과 최신 리두 로그 파일까지 적용하면 다 복구됩니다.
