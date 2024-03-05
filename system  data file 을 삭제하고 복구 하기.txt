@@ -1,0 +1,101 @@
+▣ system  data file 을 삭제하고 복구 하기
+
+ system data file ?  오라클을 운영하기 위한 데이터가 들어있는 파일
+
+  예: system tablespace, sysaux tablespace,  undotbs  tablespace 
+
+  system  data file 들은  db 올리고 복구를 할 수 없습니다.
+  항상 mount 상태에서 복구해야합니다. 
+
+■ 실습
+
+#1. 다시 한번  coldbackup 을 수행하는데 /home/oracle 밑에 coldbackup2 라는
+      폴더를 만들고 수행합니다.
+
+sys> shutdown immediate
+$ cd
+$ mkdir coldbackup2
+$ cp /u01/app/oracle/oradata/yys/*  /home/oracle/coldbackup2/
+sys> startup
+
+#2. 다시 한번 hotbackup 을 수행하는데 /home/oracle 밑에 hotbackup3 라는 폴더를
+     만들고 수행합니다.
+
+yys(SYS) > select  'alter tablespace ' || tablespace_name || ' begin backup;'
+       from  dba_data_files;
+
+alter tablespace TS01 begin backup;
+alter tablespace EXAMPLE begin backup;
+alter tablespace USERS begin backup;
+alter tablespace UNDOTBS1 begin backup;
+alter tablespace SYSAUX begin backup;
+alter tablespace SYSTEM begin backup;
+alter tablespace TS02 begin backup;
+alter tablespace CUPPANG01 begin backup;
+alter tablespace CUPPANG02 begin backup;
+alter tablespace CUPPANG03 begin backup;
+
+select * from v$backup;
+
+
+yys(SYS) > select 'cp '|| file_name ||' /home/oracle/hotbackup3/'
+          from dba_data_files;
+
+cd
+mkdir hotbackup3
+cp /u01/app/oracle/oradata/yys/ts01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/example01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/users01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/undotbs01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/sysaux01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/system01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/ts02.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/cuppang01.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/cuppang02.dbf /home/oracle/hotbackup3/
+cp /u01/app/oracle/oradata/yys/cuppang03.dbf /home/oracle/hotbackup3/
+
+yys(SYS) > select 'alter tablespace '|| tablespace_name ||
+                 ' end backup;'
+       from dba_data_files;
+
+alter tablespace TS01 end backup;
+alter tablespace EXAMPLE end backup;
+alter tablespace USERS end backup;
+alter tablespace UNDOTBS1 end backup;
+alter tablespace SYSAUX end backup;
+alter tablespace SYSTEM end backup;
+alter tablespace TS02 end backup;
+alter tablespace CUPPANG01 end backup;
+alter tablespace CUPPANG02 end backup;
+alter tablespace CUPPANG03 end backup;
+
+select * from v$backup;
+
+#3. /u01/app/oracle/oradata/yys/system01.dbf 를 삭제합니다. 
+
+[yys:~]$ rm /u01/app/oracle/oradata/yys/system01.dbf
+
+#4. db 를 startup force 해서 내렸다 올립니다.
+
+yys(SYS) > startup force
+
+#5. mount 에서 멈추게 되면 복구해야할 파일이 뭔지 확인을 합니다.
+
+yys(SYS) > select * from v$recover_file;
+
+$ cd  /u01/app/oracle/diag/rdbms/yys/yys/trace
+
+$ vi  alert*
+
+ORA-01110: data file 1: '/u01/app/oracle/oradata/yys/system01.dbf'
+
+#6. 백업받은 system01.dbf를 복원합니다.
+$ cd
+$ cp /home/oracle/hotbackup3/system01.dbf  /u01/app/oracle/oradata/yys/system01.dbf
+
+#7. 복원한 파일을 복구 합니다.
+sys>  recover  datafile  1;
+
+#8. db 를 open 시킵니다. 
+
+yys(SYS) > alter database open;
