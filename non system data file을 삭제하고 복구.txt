@@ -95,7 +95,7 @@ ORA-01157: cannot identify/lock data file 7 - see DBWR trace file
 ORA-01110: data file 7: '/u01/app/oracle/oradata/yys/ts02.dbf'
 
 ※ 복구하는 방법 !   1. 손상된 data file 번호를 확인합니다.
-                          2. 손상된 data file 이름도 확인합니다.
+                    2. 손상된 data file 이름도 확인합니다.
 
 #7. mount 상태에서 db 가 안올라가는것을 확인합니다. 
 #8. 백업받는 ts02.dbf 파일을 복원합니다.
