@@ -24,7 +24,7 @@
 
 - **hot backup 수행하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%82%AC%EC%9A%A9%EC%9E%90%20%EA%B4%80%EB%A6%AC%20hot%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt)
 
-- **control file 백업하기**: [관련 코드](링크)
+- **control file 백업하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/controlfile%20%20hotbackup%20%ED%95%98%EA%B8%B0.txt)
 
 &nbsp;
 
