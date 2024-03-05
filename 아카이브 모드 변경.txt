@@ -1,8 +1,25 @@
 ■ 실습.  db 모드를 아카이브 모드로 변환하시오 !
 
-#1. archive  log list 
-#2. shutdown immediate
-#3. startup mount
-#4. alter database archivelog;
-#5. alter  database open;
-#6. archive log list 
+#1. 데이터 베이스 모드를 확인합니다. 
+
+archive  log list 
+
+#2. 데이터 베이스를 정상 종료 합니다.
+
+shutdown immediate
+
+#3. 데이터 베이스를 mount 상태로 올립니다. 
+
+startup mount
+
+#4. 아카이브 모드로 변경합니다. 
+
+alter database archivelog;
+
+#5. open 단계로 db 를 올립니다.
+
+alter  database open;
+
+#6. 아카이브 모드로 변경되었는지 확인합니다. 
+
+archive log list 
