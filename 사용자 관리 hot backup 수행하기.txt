@@ -1,7 +1,6 @@
 ▣ 사용자 관리 hot backup 수행하기
 
-  백업 :  1.  사용자 관리 백업 :  사용자가 일일히 백업해야할 파일들을 찾아서 
-                                          OS 의 COPY 명령어로 백업하는것 
+  백업 :  1.  사용자 관리 백업 :  사용자가 일일히 백업해야할 파일들을 찾아서 OS 의 COPY 명령어로 백업하는것 
 
                       1.1.  cold  backup :  db 를 shutdown 하고 백업
                       1.2.   hot  backup :  db 운영중에 백업
@@ -68,8 +67,7 @@ SQL> alter  tablespace  users  end  backup;
 
 SQL> select * from v$backup;
 
-문제.  ts01 이라는 테이블 스페이스를 만들고 이 테이블 스페이스의
-        data file을 hot backup 하시오 !
+문제.  ts01 이라는 테이블 스페이스를 만들고 이 테이블 스페이스의 data file을 hot backup 하시오 !
 
 create  tablespace  ts01
   datafile '/u01/app/oracle/oradata/yys/ts01.dbf'   size  10m;
