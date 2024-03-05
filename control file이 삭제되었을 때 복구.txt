@@ -1,0 +1,70 @@
+▣  control file이 삭제되었을 때 복구 
+
+  data base 를 구성하는 파일 3가지 ? 
+
+         1.  data file  :   system data 와 사용자 data 가 들어있습니다.
+         2. control file :  db 의 구조 와 상태 정보가 들어있는 파일
+         3. redo  log file :  db 의 변경사항에 대한 이력 데이터가 들어있는 파일 
+  
+■ 실습 ( text 파일로 복구 )
+
+# 1. controlfile 을 binary 형태로 백업합니다.
+# 2. controlfile 을 text 형태로 백업합니다.
+# 3. shutdown  abort 로 인스턴스를 내립니다.
+# 4. controlfile 을 1개를 삭제합니다.
+# 5. startup 합니다.
+# 6. 백업받은 control file 생성 스크립트를 가지고 생성하고 db 를 올립니다.
+
+실제 스크립트:
+# 1. controlfile 을 binary 형태로 백업합니다.
+
+alter  database backup  controlfile  to  '/home/oracle/hot_20240304/control01.bak';
+
+# 2. controlfile 을 text 형태로 백업합니다.
+
+alter  database  backup  controlfile  to  trace 
+ as  '/home/oracle/hot_20240304/create_controlfile.sql';
+
+그리고 편집합니다. 
+
+# 3. shutdown  abort 로 인스턴스를 내립니다.
+
+yys(SYS) > select  name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/yys/control01.ctl
+
+설명: 위와 같이 controlfile 을 1개로만 유지해서 운영하면 위험합니다.
+        여러개로 특히 3개는 유지해서 운영해야합니다. 
+        조금 있다가 오후에 control file 을 3개로 multiplexing 하겠습니다.
+
+yys(SYS) >  shutdown  abort
+
+# 4. controlfile 을 1개를 삭제합니다.
+
+$ cd /u01/app/oracle/oradata/yys/
+$ ls
+$ rm control01.ctl 
+
+# 5. startup 합니다.
+
+yys(SYS) >  startup
+yys(SYS) > @/home/oracle/i.sql
+
+# 6. 백업받은 control file 생성 스크립트를 가지고 control file을 생성하고 db 를 올립니다.
+
+yys(SYS) > @/home/oracle/hot_20240304/create_controlfile.sql 
+
+yys(SYS) > @/home/oracle/i.sql
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+yys                      OPEN
+
+#7. controlfile 이 만들어졌는지 확인하시오 !
+
+yys(SYS) > select name from v$controlfile;
+
+$ cd /u01/app/oracle/oradata/yys/
+$ ls
