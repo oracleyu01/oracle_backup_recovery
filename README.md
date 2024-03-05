@@ -40,7 +40,7 @@
  
 - **control file이 삭제되었을 때 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/control%20file%EC%9D%B4%20%EC%82%AD%EC%A0%9C%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC.txt)
 
-- **contol file 을  multiplexing 하기**: [관련 코드]()
+- **contol file 을  multiplexing 하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/contol%20file%20%EC%9D%84%20%20multiplexing%20%ED%95%98%EA%B8%B0.txt)
 
 - **multiplexing 된 controlfile 중에 1개를 삭제하고 복구**: [관련 코드]()
  
