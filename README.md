@@ -45,4 +45,4 @@
 
 감사합니다!
 
-[코딩 대한민국](https://codingkorea.example.com)
+[관련 다음 카페](https://cafe.daum.net/oracleoracle)
