@@ -42,7 +42,7 @@
 
 - **contol file 을  multiplexing 하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/contol%20file%20%EC%9D%84%20%20multiplexing%20%ED%95%98%EA%B8%B0.txt)
 
-- **multiplexing 된 controlfile 중에 1개를 삭제하고 복구**: [관련 코드]()
+- **multiplexing 된 controlfile 중에 1개를 삭제하고 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/multiplexing%20%EB%90%9C%20controlfile%20%EC%A4%91%EC%97%90%201%EA%B0%9C%EB%A5%BC%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC.txt)
  
 - **inactive 상태의 redo log file이 삭제 되었을 때 복구**: [관련 코드]()
 
