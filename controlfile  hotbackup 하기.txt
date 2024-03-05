@@ -12,27 +12,27 @@ SQL> alter  database  backup  controlfile  to  trace
 SQL> alter  database  backup  controlfile  to  
          '/home/oracle/hotbackup/control01.bak' ;
 
-문제1.  /home/oracle/hotbackup/cre_controlfile.sql 스크립트를 열어서 
-          나중에 복구하기 좋도록 편집을 해놓으시오 !
+문제1.  /home/oracle/hotbackup/cre_controlfile.sql 스크립트를 열어서  나중에 복구하기 좋도록 편집을 해놓으시오 !
 
 문제2.  편집한 스크립트를 이용해서 controlfile 을 생성합니다.
 
  ※ 경험 있는 dba 들은 처음에 db 생성 이후에 반드시 아래의 2가지 작업을 합니다.
 
-  1.  control file 안에 있는 maxdatafiles 파라미터 값을 1000 으로 변경하고
-      controlfile 을 다시 생성
+  1.  control file 안에 있는 maxdatafiles 파라미터 값을 1000 으로 변경하고 controlfile 을 다시 생성
 
  2.  오라클 파라미터 파일의 db_files 파라미터 값을 1000 으로 변경합니다.
 
    #1.  현재 인스턴스가 spfile 로 구성되었는지 pfile 로 구성되었는지 확인합니다.
    #2.  spfile 로 구성되었다면 alter system 명령어로 db_files 를 1000 으로 변경합니다.
     
-    show  parameter  db_files 
-    alter   system  set  db_files=1000  scope=spfile;
+    SQL>  show  parameter  db_files 
+    SQL>  alter   system  set  db_files=1000  scope=spfile;
 
    #3.  db 를 정상적으로 내렸다가 올립니다.
-    shutdown immeidate
-    startup
+
+    SQL> shutdown immeidate
+    SQL> startup
 
    #4.  db_files 가 잘 변경되었는지 확인합니다. 
-    show parameter db_files
+
+    SQL> show parameter db_files
