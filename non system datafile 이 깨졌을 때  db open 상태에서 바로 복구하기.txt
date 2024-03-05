@@ -1,0 +1,94 @@
+■ non system datafile 이 깨졌을 때  db open 상태에서 바로 복구하기
+
+#0.  ts02 테이블 스페이스에 emp022 테이블을 생성합니다.
+
+scott>  create  table  emp022
+          tablespace  ts02
+        as
+          select * from  emp;
+
+#1.  ts02 테이블 스페이스를 hot backup 합니다.
+
+sys>  alter  tablespace  ts02  begin  backup;
+
+$ cp /u01/app/oracle/oradata/yys/ts02.dbf   /home/oracle/hotbackup/ts02b.dbf
+
+sys> alter  tablespace  ts02  end  backup;
+
+sys>  select  * from  v$backup;
+ 
+  전부 not active 인지 확인합니다. 
+
+#2.  로그 스위치를 3번 일으킵니다.
+
+@logsw
+@logsw
+@logsw
+
+#3.  체크 포인트를 일으킵니다. 
+
+sys> alter  system  checkpoint;
+
+#4.  os 에서 ts02.dbf 를 삭제합니다.
+
+$ rm /u01/app/oracle/oradata/yys/ts02.dbf
+
+sys> @flush
+
+#5.  emp022 테이블을 select 를 합니다. <-- 에러가 납니다.
+
+yys(SCOTT) > select * from emp022;
+
+ORA-01116: error in opening database file 7
+
+위의 상황에서 호출을 받고 국민 카드에 들어갔다고 생각합니다.
+alert log file 을 열어봐야합니다. 그리고 항상 아래에 putty 열고 tail -f 로 실시간
+alert log file 을 모니터링해야합니다.
+
+$ cd /u01/app/oracle/diag/rdbms/yys/yys/trace
+$ vi  alert*
+
+ 대문자 G 를 누르면 맨 아래로 한번에 내려옵니다. 
+
+ORA-01110: data file 7: '/u01/app/oracle/oradata/yys/ts02.dbf'
+
+ts02.dbf  이 없어서 장애가 났구나 라고 확인할 수 있는것입니다.
+
+#6.  ts02 테이블 스페이스를 offline 합니다.
+
+sys>  alter  tablespace  ts02  offline  immediate;
+
+immediate 를 쓴 이유는 immediate 를 안쓰면 해당 테이블 스페이스에 대해
+ checkpoint 를 일으키고 offline 시킵니다.  메모리에 있는 내용을 data file 에 
+반영을 하는게 체크포인트인데 지금 data file 이 삭제되었으니까 내려쓸 수 가 
+없습니다. 그래서 immediate 를 쓰면 체크포인트없이 offline  시키겠다는것입니다.
+
+sys>  select  tablespace_name, status  from dba_tablespaces;
+
+TS02                           OFFLINE  <--- offline 된것을 확인합니다.
+
+#7.  백업받은 ts02.dbf 파일을 복원합니다.
+
+$ cp /home/oracle/hotbackup/ts02b.dbf  /u01/app/oracle/oradata/yys/ts02.dbf
+
+#8.  ts02 테이블 스페이스를 복구합니다.
+
+sys> recover  tablespace  ts02; 
+
+Media recovery complete
+
+#9.  ts02 테이블 스페이스를 online 시킵니다.
+
+sys> alter  tablespace  ts02  online;
+sys> select tablespace_name, status from dba_tablespaces;
+
+#10.  emp022 테이블을 select 합니다. 
+
+yys(SCOTT) > select count(*) from emp022;
+
+  COUNT(*)
+----------
+        14
+
+ non system datafile 의 경우는 꼭 db 를 안내려도 복구 할 수 있습니다.
+ 그냥 테이블 스페이스를 offline 시키고 복원, 복구하면 됩니다. 
