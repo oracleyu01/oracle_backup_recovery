@@ -30,7 +30,9 @@
 
 ### 2. 완전 복구하기
  
-- **non system data file을 삭제하고 복구**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/non%20system%20data%20file%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC.txt)
+- **non system data file을 삭제하고 복구(db close 상태)**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/non%20system%20data%20file%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC.txt)
+
+- **non system data file을 삭제하고 복구(db open 상태)**: [관련 코드](링크)
   
 - **system data file을 삭제하고 복구**: [관련 코드](링크)
 
