@@ -1,0 +1,68 @@
+
+▣  contol file 을  multiplexing 하기 
+
+ 현재 controlfile 이 딱 1개로만 운영되고 있습니다.
+ 그러다보니까 이 1개가 깨지면 백업 받은게 있어야 복구가 됩니다. 
+ 백업을 자주 받지 않기 때문에 만약 컨트롤 파일 최신 백업본이 없으면
+ 완전히 낭패입니다.  data file 은 만약 복구를 못하면 그냥 포기하면 되는데
+ controlfile 을 복구 못하면 db 안올라옵니다. 
+
+ 최신 controfile 백업본을 자주 생성하던지 아니면 controlfile을 멀티 플랙싱하면됩니다.
+
+■ 실습:
+
+순서:
+#1.  현재 controlfile 의 위치와 이름을 확인합니다.
+#2.  show parameter control_files 라고 해서 파라미터 파일이 인식하는
+      controlfile 의 위치를 확인합니다.
+#3.  지금 현재 spfile 로 운영되는지 pfile 로 운영되는지 확인합니다.
+#4.  다중화할 control file 을 control_files 에 명시하겠금 spfile 을 수정합니다.
+#5.  shutdown immediate 로 db 를 내립니다.
+#6.  os 에서 control01.ctl 을 control02.ctl 로 복사합니다.
+#7.  인스턴스를 startup 합니다. 
+
+구현:
+#1.  현재 controlfile 의 위치와 이름을 확인합니다.
+
+SQL> select  name from v$controlfile;
+/u01/app/oracle/oradata/yys/control01.ctl
+
+#2.  show parameter control_files 라고 해서 파라미터 파일이 인식하는
+      controlfile 의 위치를 확인합니다.
+
+SQL> show  parameter control_files
+
+#3.  지금 현재 spfile 로 운영되는지 pfile 로 운영되는지 확인합니다.
+
+SQL> show parameter spfile 
+
+#4.  다중화할 control file 을 control_files 에 명시하겠금 spfile 을 수정합니다.
+
+SQL> alter  system  set  control_files='/u01/app/oracle/oradata/yys/control01.ctl',
+'/u01/app/oracle/oradata/yys/control02.ctl'  scope=spfile;
+
+#5.  shutdown immediate 로 db 를 내립니다.
+
+SQL> shutdown  immediate
+
+#6.  os 에서 control01.ctl 을 control02.ctl 로 복사합니다.
+
+[yys:~]$ cd /u01/app/oracle/oradata/yys
+[yys:yys]$ cp control01.ctl control02.ctl
+
+#7.  인스턴스를 startup 합니다. 
+
+yys(SYS) > startup
+
+#8.  control file이 2개로 보이는지 확인합니다.
+
+yys(SYS) > select  name  from v$controlfile;
+
+yys(SYS) > show parameter control_files 
+
+위의 실습을 하시고 아래에 이수자 평가제출물 2번째 제출물 문제 푸세요 ~
+
+문제1. controlfile 을 3개로 multi plexing 합니다.(이수자평가 제출물) 
+        아래의 결과를 캡쳐해서 올리세요 ~
+
+yys(SYS) > select  name  from v$controlfile;
