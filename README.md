@@ -62,9 +62,25 @@
 
 - **time base 불완전 복구 수행하기**: [관련 코드]()
 
+- **cancel base 불완전 복구 수행하기**: [관련 코드]()
 
+- **모든 datafile, redo logfile 이 삭제되었을 때 복구**: [관련 코드]()
+ 
+- **모든 datafile, controlfile, redo logfile 이 삭제되었을때 복구**: [관련 코드]()
 
----
+### 4. RMAN 을 사용하여 백업하기
+
+- **RMAN 을 사용하여 cold backup 수행하기**: [관련 코드]()
+
+- **RMAN 을 사용하여 hot backup 수행하기**: [관련 코드]()
+
+- **RMAN 을 사용하여 특정 테이블 스페이스만 백업하기**: [관련 코드]()
+
+- **RMAN 을 사용하여 Non System datafile 손상시 복구하기(mount상태)**: [관련 코드]()
+
+- **RMAN 을 사용하여 Non System datafile 손상시 복구하기(open상태)**: [관련 코드]()
+ 
+- **RMAN 을 사용해서 system datafile 들을 삭제하고 복구하기**: [관련 코드]()
 
 감사합니다!
 
