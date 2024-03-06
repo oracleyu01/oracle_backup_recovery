@@ -17,7 +17,7 @@
 | 2 | cold  backup 수행하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/cold%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt) |
 | 3 | hot backup 수행하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%82%AC%EC%9A%A9%EC%9E%90%20%EA%B4%80%EB%A6%AC%20hot%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt) |
 | 4 | control file 백업하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/controlfile%20%20hotbackup%20%ED%95%98%EA%B8%B0.txt) |
-|   | **2. 완전 복구하기** |  |
+|   | **2. 사용자 관리 완전 복구하기** |  |
 | 5 | non system data file을 삭제하고 복구(db close 상태) | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/non%20system%20data%20file%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC.txt) |
 | 6 | non system data file을 삭제하고 복구(db open 상태) | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/non%20system%20datafile%20%EC%9D%B4%20%EA%B9%A8%EC%A1%8C%EC%9D%84%20%EB%95%8C%20%20db%20open%20%EC%83%81%ED%83%9C%EC%97%90%EC%84%9C%20%EB%B0%94%EB%A1%9C%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 7 | system data file을 삭제하고 복구 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/system%20%20data%20file%20%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC%20%ED%95%98%EA%B8%B0.txt) |
@@ -32,7 +32,7 @@
 | 16 | redo log group 삭제하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/redo%20log%20group%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B8%B0.txt) |
 | 17 | 다중화 된 상태에서 inactive 리두 로그 멤버 1개를 손상시키기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%98%88%EC%A0%9C.%20%20%EB%8B%A4%EC%A4%91%ED%99%94%20%EB%90%9C%20%EC%83%81%ED%83%9C%EC%97%90%EC%84%9C%20inactive%20%EB%A6%AC%EB%91%90%20%EB%A1%9C%EA%B7%B8%20%EB%A9%A4%EB%B2%84%EB%A5%BC%20%EC%86%90%EC%83%81%EC%8B%9C%ED%82%A4%EA%B8%B0.txt) |
 | 18 | 그룹의 모든 멤버를 삭제되었을때 복구하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EA%B7%B8%EB%A3%B9%EC%9D%98%20%EB%AA%A8%EB%93%A0%20%EB%A9%A4%EB%B2%84%EB%A5%BC%20%EC%82%AD%EC%A0%9C%EB%90%98%EC%97%88%EC%9D%84%EB%95%8C%20%EB%B3%B5%EA%B5%AC%ED%95%98%EB%8A%94%20%EB%B0%A9%EB%B2%95.txt) |
-|    | **3. 불완전 복구하기** |  |
+|    | **3. 사용자 관리 불완전 복구하기** |  |
 | 19 | time base 불완전 복구 수행하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt) |
 | 20 | cancel base 불완전 복구 수행하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%20%EB%B3%B5%EA%B5%AC.txt) |
 | 21 | 모든 redo logfile 이 삭제되었을 때 복구 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%AA%A8%EB%93%A0%20redo%20file%20%EC%9D%B4%20%EC%82%AD%EC%A0%9C%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC.txt) |
