@@ -70,13 +70,11 @@
 
 ### 4. RMAN 을 사용하여 백업하기
 
-- **RMAN 을 사용하여 cold backup 수행하기**: [관련 코드]()
+- **RMAN 을 사용하여 cold backup 수행하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20cold%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt)
 
 - **RMAN 을 사용하여 hot backup 수행하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20cold%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt)
 
 - **RMAN 을 사용하여 특정 테이블 스페이스만 백업하기**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%ED%8A%B9%EC%A0%95%20tablespace%EB%A7%8C%20%EB%B0%B1%EC%97%85%EB%B0%9B%EA%B8%B0.txt)
-
-- **RMAN 을 사용하여 Non System datafile 손상시 복구하기(mount상태)**: [관련 코드]()
 
 - **RMAN 을 사용하여 Non System datafile 손상시 복구하기(open상태)**: [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20Non%20system%20datafile%20%EC%86%90%EC%83%81%EC%8B%9C%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0(open%EC%83%81%ED%83%9C).txt)
  
