@@ -1,0 +1,55 @@
+
+▣ 예제25. RMAN 을 사용해서 특정 tablespace만 백업받기
+
+■ 실습
+
+#1.   ts5000  이라는 테이블 스페이스를 생성합니다. 
+
+SQL>  create  tablespace  ts5000
+          datafile  '/u01/app/oracle/oradata/yys/ts5000.dbf'  size 10m;
+
+#2.   rman 을 이용해서 ts5000 테이블 스페이스를 hot 백업합니다. 
+
+$ rman target sys/oracle nocatalog
+
+RMAN> backup  tablespace  ts5000;
+
+RMAN> list backup of tablespace ts5000;
+
+문제1.  ts6000 테이블 스페이스를 사이즈 10m 로 생성하고 RMAN으로 백업받으시오 !
+
+▣ 예제26. RMAN 을 사용해서 Non system datafile 손상시 복구하기
+
+■  실습:
+
+#1.  ts5000.dbf 를 os 에서 삭제합니다. 
+
+[yys:~]$ oradata
+[yys:yys]$ ls
+[yys:yys]$ rm ts5000.dbf
+
+#2.  db 를 내렸다 올립니다.
+
+yys(SYS) >  startup force 
+
+#3.  rman 으로 접속합니다.
+
+[yys:yys]$ rman target sys/oracle nocatalog
+
+#4.  복구해야할 파일이 뭔지 조회합니다.
+
+RMAN> list failure;
+
+yys(SYS) > select * from v$recover_file;
+
+#5.  문제가되는 data file 을 복원합니다.
+
+RMAN> restore  datafile 11;
+
+#6.  문제가되는 data file 을 복구합니다.
+
+RMAN> recover datafile 11; 
+
+#7.  db 를 오픈합니다.
+
+RMAN> alter database open;

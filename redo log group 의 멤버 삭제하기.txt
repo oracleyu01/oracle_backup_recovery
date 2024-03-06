@@ -1,0 +1,46 @@
+
+▣ redo log group 의 멤버 삭제하기
+
+리두 로그 그룹의 멤버를 삭제하려면 삭제하려는 리두 로그 그룹의 상태가
+current 나 active 면 안됩니다. 상태가 inactive 상태여야합니다.
+
+■ 실습
+#1.  리두 로그 그룹의 상태를 확인합니다. 
+
+yys(SYS) >@log_status.sql
+
+yys(SYS) > select group#, member
+                from v$logfile
+                order by group#
+
+yys(SYS) > save logfile.sql
+
+#2.  inactive 인 리두 로그 그룹의 멤버를 하나 drop 합니다.
+
+yys(SYS) > alter  database  drop  logfile  member  
+              '/u01/app/oracle/oradata/yys/redo01b.log'  ;
+
+yys(SYS) > alter  database  drop  logfile  member  
+              '/u01/app/oracle/oradata/yys/redo02b.log'  ;
+
+yys(SYS) > @log_status
+
+    GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 INACTIVE                  4          1 YES
+         2 INACTIVE                  5          1 YES
+         3 CURRENT                  6          2 NO
+
+#3.  나머지 리두 로그 그룹의 멤버도 다 drop 하고 그룹당 멤버를 1개씩만 유지 합니다.
+   ( ※  로그 스위치와 체크 포인트를 일으켜서  상태를 inactive 로 만들어놓고 작업합니다)
+
+yys(SYS) > alter system switch logfile;
+
+yys(SYS) > alter system checkpoint;
+
+yys(SYS) > @log_status
+
+yys(SYS) >  alter  database  drop  logfile   member
+               '/u01/app/oracle/oradata/yys/redo03b.log'; 
+          
+yys(SYS) > @log_status

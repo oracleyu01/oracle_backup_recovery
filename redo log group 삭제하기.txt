@@ -1,0 +1,40 @@
+
+▣ 예제.  redo log group 삭제하기
+
+현장에서 redo  log  group 을 삭제하는 경우 ?   
+
+    redo log group 안의 멤버가 손상되었을때  group 을 삭제합니다. 
+
+※ group 삭제시 주의사항 !  
+
+   current  상태와 active 상태의  group 은 삭제할 수  없습니다. 
+
+■ 실습:
+
+*순서:
+#1. 4번 그룹의 상태를 확인하고 current 나 active 이면  inactive 로 바꿉니다.
+#2. 4번 그룹을 삭제합니다.
+
+
+*구현:
+#1. 4번 그룹의 상태를 확인하고 current 나 active 이면  inactive 로 바꿉니다.
+
+yys(SYS) > @log_status.sql 
+
+yys(SYS) >  alter  system checkpoint;
+
+yys(SYS) > @log_status.sql 
+
+#2. 4번 그룹을 삭제합니다.
+
+yys(SYS) > alter   database  drop   logfile   group   4;
+
+yys(SYS) > @log_status.sql 
+
+문제1. 5번 그룹을 삭제합니다. 
+
+yys(SYS) > alter system switch logfile;
+
+yys(SYS) > alter system checkpoint;
+
+yys(SYS) > alter database drop logfile group 5;

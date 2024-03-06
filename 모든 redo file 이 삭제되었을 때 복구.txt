@@ -1,0 +1,83 @@
+
+▣ 예제. 모든 redo file 이 삭제되었을 때 복구
+
+
+그림설명:  https://cafe.daum.net/oracleoracle/SoDd/204
+
+■ 실습1. 
+
+#1. colbackup 을 수행합니다.
+#2. 로그 파일의 상태를 확인합니다.
+#3. shutdown abort
+#4. 모든 redo log file 들을 전부 삭제합니다.
+#5. startup <------- mount 에서 안올라옵니다.
+#6. 만약에 그냥 shutdown 되었다면 startup mount 를 합니다.
+#7.  @log_status   <--- current redo log group 의 시퀀스 번호를 확인합니다.
+#8.  shutdown abort
+#9.  원본 datafile 들 다 지우고 coldbackup 본에서 모든 datafile 들을 복원합니다.
+#10. startup mount
+#11. set  autorecovery  off
+#12. recover  database  until  cancel;
+
+      current  sequence 번호 물어볼때 cancel 이라고 합니다.
+
+#13. alter database open resetlogs; 
+#14. coldbackup 을 걸어놓고 식사하러 가세요 ~
+
+구현:
+#1. colbackup 을 수행합니다.
+SQL> shutdown  immediate
+
+$ mkdir  coldbackup7
+$ oradata
+$ cp  *   /home/oracle/coldbackup7/
+
+SQL> startup
+
+#2. 로그 파일의 상태를 확인합니다.
+
+#3. shutdown abort
+
+#4. 모든 redo log file 들을 전부 삭제합니다.
+
+[yys:~]$ oradata
+[yys:yys]$
+[yys:yys]$ rm *.log
+
+#5. startup <------- mount 에서 안올라옵니다.
+
+#6. 만약에 그냥 shutdown 되었다면 startup mount 를 합니다.
+
+#7.  @log_status   <--- current redo log group 의 시퀀스 번호를 확인합니다.
+
+#8.  shutdown abort
+
+#9.  원본 datafile 들 다 지우고 coldbackup 본에서 모든 datafile 들을 복원합니다.
+
+[yys:~]$ oradata
+
+[yys:yys]$ rm *.dbf
+
+[yys:yys]$ cp /home/oracle/coldbackup7/*.dbf .
+
+#10. startup mount
+
+
+#11. set  autorecovery  off
+
+
+#12. recover  database  until  cancel;
+
+      current  sequence 번호 물어볼때 cancel 이라고 합니다.
+
+#13. alter database open resetlogs; 
+
+#14. 리두 로그 파일의 상태를 확인합니다.
+
+yys(SYS) > @log_status
+
+    GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 CURRENT                   1          2 NO
+         2 UNUSED                    0          2 YES
+         3 UNUSED                    0          2 YES

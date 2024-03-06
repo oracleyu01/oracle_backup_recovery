@@ -1,0 +1,82 @@
+
+▣ 예제.  그룹의 모든 멤버를 삭제되었을때 복구하는 방법
+
+그림 설명 : https://cafe.daum.net/oracleoracle/SoDd/148
+
+■ 실습
+
+* 순서 
+#1.  현재 리두 로그 그룹의 상태를 확인합니다.
+#2.  inactive 인 리두 로그 그룹을 하나 선택해서 그 그룹의 멤버를 모두 삭제합니다.
+#3.  로그 스위치를 여러번 일으킵니다.
+#4.  db 가 shutdown 되었다면 startup mount 를 합니다.
+#5.  문제가 되고 있는 리두 로그 그룹을 삭제합니다.
+#6.  문제가 되고 있는 리두 로그 그룹을 추가합니다.
+#7.  db 를 open 시킵니다. 
+
+
+
+* 구현
+#1.  현재 리두 로그 그룹의 상태를 확인합니다.
+
+yys(SYS) > @log_status
+
+    GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+   ---------- ----------------     ----------    ----------    ---
+         1 CURRENT                  15          2 NO
+         2 INACTIVE                  13          2 YES
+         3 INACTIVE                  14          2 YES
+
+#2.  inactive 인 리두 로그 그룹을 하나 선택해서 그 그룹의 멤버를 모두 삭제합니다.
+
+yys(SYS) > @logfile
+
+$ cd /u01/app/oracle/oradata/yys/
+$ rm  redo03.log
+$ rm  redo03b.log
+$ cd 
+
+#3.  로그 스위치를 여러번 일으킵니다.
+
+yys(SYS) > alter  system  switch  logfile;
+yys(SYS) > @log_status
+
+#4.  db 가 shutdown 되었다면 startup mount 를 합니다.
+
+#5.  문제가 되고 있는 리두 로그 그룹을 삭제합니다.
+
+yys(SYS) >  alter database  drop  logfile  group  3;
+ alter database  drop  logfile  group  3
+*
+ERROR at line 1:
+ORA-00350: log 3 of instance yys (thread 1) needs to be archived
+
+위와 같이 리두 로그 멤버가 손상되어서 그룹을 drop 하려고 하는데 
+archiving 이 안되어서 drop 이 안되면 다음과 같이 아카이빙 하지 말고 drop해라라고 하면됩니다.
+
+yys(SYS) > alter  database  clear unarchived logfile  group  3; 
+
+위의 명령어를 그룹 삭제와 추가를 한번에 하는 명령어 입니다.
+
+yys(SYS) >@log_status.sql 
+
+#7.  db 를 open 시킵니다. 
+
+yys(SYS) > alter  database  open;
+
+문제1.  이번에는 current 만 빼로 inactive 인 리두 로그 그룹의 데이터를 모두 archiving 시킨
+          상태에서 inactive 상태의 리두 로그 그룹을 하나 골라서 그 그룹의 멤버를 모두 
+          삭제하고 복구하시오 !
+
+#1. current 만 빼로 전부 아카이빙 시키는 명령어 
+
+yys(SYS) > alter system archive log all;
+
+yys(SYS) > alter  system  checkpoint;
+
+yys(SYS) > @log_status
+GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 INACTIVE                 18          2 YES
+         2 INACTIVE                 19          2 YES
+         3 CURRENT                  20          2 NO

@@ -1,0 +1,71 @@
+
+▣ 예제.  redo log file 의 다중화 하기
+
+ - 리두 로그 파일(redo log file)  의 역활 ?   복구를 하기 위해서 필요한 파일
+
+ - 리두 로그 파일에 리두 로그 버퍼의 내용을 적는 백그라운 프로세서?   LGWR
+
+ - 리두 로그 파일은  순환적으로 사용이 됩니다.  다시 재사용이 됩니다. 
+
+ - 변경사항이 갑자기 많은 때에 LGWR 가 Redo log file 에 내용을 적다가 
+   redo log file 이 깨지는 경우가 종종 생깁니다. 
+
+ 예:  대학교 학교 시스템에서 갑자기 insert 와 update 와 delete 작업이 몰릴때 ?
+
+     답 :  수강신청 
+
+    장애에 대처를 빠르게 하려면 평상시 백업을 잘해야하고 
+    리두 로그 파일 같은 경우는 다중화를 해놔야합니다.
+
+    db 장애는 어쩔수 없이 발생하니까 평상시 대비를 잘 하고 있으면 됩니다.
+
+ 
+그림 설명: https://cafe.daum.net/oracleoracle/SoDd/118
+
+■ 실습:
+
+* 순서
+#1.  리두 로그 그룹이 몇개인지 확인합니다.
+#2.  리두 로그 그룹의 멤버가 몇개인지 확인합니다.
+#3.  리두 로그 그룹의 멤버가 무엇인지 확인합니다.
+#4.  리두 로그 그룹의 멤버를 추가합니다.
+#5.  리두 로그 그룹의 멤버가 추가 되었는지 확인합니다.
+
+* 구현
+#1.  리두 로그 그룹이 몇개인지 확인합니다.
+
+yys(SYS) > select  group#, status, sequence#, archived
+                 from  v$log;
+
+yys(SYS) > save  log_status.sql
+
+#2.  리두 로그 그룹의 멤버가 몇개인지 확인합니다.
+
+yys(SYS) > select group#,  members
+                    from  v$log;
+
+그룹당 멤버가 1개만 있습니다.  
+
+※ 그래서 만약 멤버가 삭제되면 db 가 다운됩니다.
+
+현장의 팁!  rm 을 수행하기전에 3번 생각한다.  아니면 짝꿍에게 물어본다.
+
+#3.  리두 로그 그룹의 멤버가 무엇인지 확인합니다.
+
+yys(SYS) > select  group#, member
+                 from v$logfile;
+
+#4.  리두 로그 그룹의 멤버를 추가합니다.
+
+yys(SYS) > alter  database  add   logfile   member  
+              '/u01/app/oracle/oradata/yys/redo01b.log'   to  group  1; 
+
+yys(SYS) > select  group#, members
+                from v$log;
+
+
+#5.  리두 로그 그룹의 멤버가 추가 되었는지 확인합니다
+
+yys(SYS) >  select group#, member
+                 from  v$logfile
+                order by group# asc;

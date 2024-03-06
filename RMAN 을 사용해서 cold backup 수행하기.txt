@@ -1,0 +1,49 @@
+
+▣ 예제. RMAN 을 사용해서 cold backup 수행하기
+
+  오라클의 백업과 복구 :
+
+   1.  Rman 을 사용하지 않았을 때의 백업과 복구
+   2.  Rman 을 사용했을때의 백업과 복구 
+
+  RMAN ( Recovery  Manager )
+
+       1. recovery  catalog db  를 사용 안했을때  
+       2. recovery  catalog db  를 사용 했을때 
+
+   백업해야할 database 가 여러개이면 recovery catalog db 를 사용하는게 권장됩니다.
+
+■ 실습:
+
+#1. rman 으로 접속이 잘 되는지 확인합니다.
+
+[yys:~]$ rman target sys/oracle nocatalog
+
+#2. 빠져나와서  sys 유져로 접속해서 db 를 shutdown immediate 로 내립니다.
+
+RMAN> exit;
+
+yys(SYS) > shutdown immediate
+
+#3. 다시 startup mount 로 올립니다. 
+
+yys(SYS) > startup mount
+
+#4.  rman 으로 접속해서 전체 데이터 베이스 full backup 을 수행합니다. 
+
+[yys:~]$ rman target sys/oracle nocatalog
+
+RMAN> backup  database  include current  controlfile;
+
+Finished backup at 06-MAR-24
+
+RMAN>  list  backupset;
+
+/u01/app/oracle/flash_recovery_area/YYS/backupset/2024_03_06/
+
+RMAN 은 cold 백업이 mount 상태에서 백업하는것입니다. 
+
+yys(SYS) > alter database open;
+
+Database altered.
+

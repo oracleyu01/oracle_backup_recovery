@@ -1,0 +1,107 @@
+
+▣ 예제.  다중화 된 상태에서 inactive 리두 로그 멤버를 손상시키기
+
+그림 설명: https://cafe.daum.net/oracleoracle/SoDd/146
+
+OCP 문제:  위의 상태에서 DB 가 정상적으로 운영되는가 ?
+
+■ 실습:
+
+* 순서:
+#1.  지금 현재 있는 그룹에 멤버를 2개씩 유지하게하시오 !
+#2.  1번 그룹만 current 이고 2번과 3번은 inactive 상태가 되게하시오 !
+#3.  3번 그룹의 멤버중 하나를 삭제하시오 !
+#4.  로그 스위치를 수동으로 여러번 일으키는게 가능한지 확인하시오 !
+
+
+* 구현:
+#1.  지금 현재 있는 그룹에 멤버를 2개씩 유지하게하시오 !
+
+※ 아까 리두 로그 그룹의 멤버를 삭제할 때 os 의 해당 해당 파일이 같이 삭제안되었습니다.
+    그래서 다음과 같이 따로 삭제해줘야합니다.
+    그런데 이때 주의할 사항이 @/home/oracle/logfile.sql 을 해서 결과에 없는 logfile 멤버
+    를 지워야지 기존에 잘 쓰고있는 멤버를 지우면 안됩니다.
+
+[yys:yys]$ cd /u01/app/oracle/oradata/yys
+[yys:yys]$ rm redo01b.log
+[yys:yys]$ rm redo02b.log
+[yys:yys]$ rm redo03b.log
+[yys:yys]$ rm redo04.log
+[yys:yys]$ rm redo05.log
+
+alter  database   add   logfile   member
+ '/u01/app/oracle/oradata/yys/redo01b.log'  to  group  1;
+
+alter  database   add   logfile   member
+ '/u01/app/oracle/oradata/yys/redo02b.log'  to  group  2;
+
+alter  database   add   logfile   member
+ '/u01/app/oracle/oradata/yys/redo03b.log'  to  group  3;
+
+yys(SYS) > @/home/oracle/log_status.sql
+
+그룹당 멤버가 2개씩 있는지 확인하세요 ~~
+
+#2.  1번 그룹만 current 이고 2번과 3번은 inactive 상태가 되게하시오 !
+
+yys(SYS) > @/home/oracle/log_status.sql
+
+    GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 CURRENT                  12          2 NO
+         2 INACTIVE                  10          2 YES
+         3 INACTIVE                  11          2 YES
+
+#3.  3번 그룹의 멤버중 하나를 삭제하시오 !
+
+yys(SYS) > @/home/oracle/logfile.sql
+
+$ cd /u01/app/oracle/oradata/yys/
+$ rm  redo03b.log
+
+오라클 몰래 지운거기 때문에 오라클은 모릅니다. 
+그런데 언제 아느냐면 LGWR 가 redo03b.log 를 사용하려 할 때 알게됩니다.
+
+오라클이 알게되면 db 가 멈추는지 아래의 4번 작업을 해서 확인합니다. 
+
+#4.  로그 스위치를 수동으로 여러번 일으키는게 가능한지 확인하시오 !
+
+yys(SYS) > alter system switch logfile;
+
+yys(SYS) > @/home/oracle/log_status
+
+yys(SYS) > alter system switch logfile;
+
+yys(SYS) > @/home/oracle/log_status
+
+설명:  redo03.log  하나가 남아있기 때문에 정상적으로 운영이 됩니다.
+         다만 alert 로그 파일에 계속해서 메세지를 남깁니다.  redo03b.log 없다고 남깁니다.
+
+문제1.  alert log file 을 열어서 위의 문제가 발생하고 있는지 확인합니다.
+
+yys(SYS) > show parameter background_dump_dest
+
+$ cd /u01/app/oracle/diag/rdbms/yys/yys/trace
+
+$ ls -l alert*
+
+$ vi  alert_yys.log
+
+ 대문자 G 를 누르면 맨 아래로 내려옵니다.
+
+문제2.(점심시간 문제)  다시 그룹 3번에 아래의 멤버를 추가하시오 !
+
+/u01/app/oracle/oradata/yys/redo03b.log
+
+추가된 결과를 @log_status.sql 로 보여주시고 검사 받고 식사하러가세요 ~
+라인 검사입니다. 
+
+답: 오라클이 기억하는 기존 멤버를 삭제하고
+
+  alter database drop logfile member
+      '/u01/app/oracle/oradata/yys/redo03b.log';
+
+ 다시 추가하는데 
+
+  alter database add logfile member
+      '/u01/app/oracle/oradata/yys/redo03b.log'  to group 3;

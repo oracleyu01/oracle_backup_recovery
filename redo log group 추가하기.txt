@@ -1,0 +1,57 @@
+
+▣ 예제.  redo log group 추가하기
+
+ 오라클에서 권장하는 그룹의 갯수는 최소 5개 이상 유지하는것을 권장합니다.
+
+ 왜 그런가 ?   성능 문제 때문입니다.  
+
+                   리두 로그 그룹의 갯수가 너무 적으면 DML 작업이 많을 때 
+                   오라클이 느려집니다.
+
+메모리의 변경사항이 DATA FILE 에 내려써졌으면 inactive 이고 
+안내려써졌으면 active  입니다.
+
+ 선배 따라서 고객사에 방문할 때 고객사에서 신입 db 엔지니어에게 처음 시키는일이
+ 뭐냐면 그 고객사 db의 헬스 체크 입니다.   헬스 체크 스크립트안에 리두 로그 그룹의
+  갯수를 확인하는 스크립트가 있습니다. 
+
+■ 실습:
+
+* 순서: 
+#1. 리두 로그 그룹의 갯수를 확인합니다.
+#2. 리두 로그 그룹을 추가합니다. 
+#3. 그룹이 잘 만들어졌는지 확인합니다.
+
+
+* 구현: 
+#1. 리두 로그 그룹의 갯수를 확인합니다.
+
+yys(SYS) > @log_status.sql
+
+#2. 리두 로그 그룹을 추가합니다. 
+
+yys(SYS) > alter  database  add  logfile  group  4  
+              '/u01/app/oracle/oradata/yys/redo04.log'   size 10m;
+
+#3. 그룹이  잘 만들어졌는지 확인합니다.
+
+yys(SYS) > @log_status.sql
+
+yys(SYS) > @logfile.sql
+
+문제1.  리두 로그 그룹 5번을 추가하시오 !
+
+yys(SYS) > alter  database  add  logfile  group  5 
+              '/u01/app/oracle/oradata/yys/redo05.log'   size 10m;
+
+※ db 엔지니어와 dba 를 위한 팁! 
+
+    리두 로그 그룹과 멤버를 추가하는 명령어 수행할 때  스크립트를 한번에 하나씩
+    수행하세요 ~  만약 여러개의 스크립트를 한번에 돌려서 수행을 하다면 보면
+    controlfile 이 깨질 수 있습니다. 
+
+문제2.  추가한 리두 로그 그룹의 상태가 unused 가 아니게 하시오 !
+
+yys(SYS) > alter  system  switch  logfile;
+
+yys(SYS) > @log_status.sql 

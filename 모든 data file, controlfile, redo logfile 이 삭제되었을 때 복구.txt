@@ -1,0 +1,90 @@
+
+▣ 예제22. 모든 data file, controlfile, redo logfile 이 삭제되었을 때 복구 
+
+ 그림 설명: https://cafe.daum.net/oracleoracle/SoDd/205
+
+설명:  모든 datafile 과 controlfile 과 redo logfile 이 전부 삭제 되었다면
+        current redo log file 도 삭제된 상태 입니다.
+        월요일에 백업받은 datafile 들과 controlfile 들 모두 복원합니다.
+        그리고  cancel base  불완전 복구 방법으로 불완전 복구를 시도합니다.
+       그런데 이때 controlfile 도 백업받은것을 가져왔으므로 
+       recover  database  using  backup  controlfile   until  cancel;
+       로 복구해야합니다.
+
+■ 실습
+
+순서
+#1. cold backup 을 합니다.
+#2. controlfile 을 생성하는 스크립트를 생성합니다.
+#3. shutdown abort
+#4. 모든 datafile과 controlfile 과 redo log file 을 전부 삭제합니다.
+#5. startup <---  nomount  에서 더이상 올라가지 않습니다. 
+#6. shutdown abort
+#7. 백업받은 datafile 들과 controlfile 들을 복원합니다.
+#8. startup mount
+#9. cancel base 불완전 복구를 시도합니다.
+#10.  resetlogs 로 db 를 올립니다. 
+
+구현:
+#1. cold backup 을 합니다.
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL>  alter  system  checkpoint;
+
+SQL>  shutdown immediate
+
+[yys:~]$ mkdir coldbackup8
+[yys:~]$
+[yys:~]$ oradata
+[yys:yys]$ cp * /home/oracle/coldbackup8/
+
+SQL> startup
+
+#2. controlfile 을 생성하는 스크립트를 생성합니다.
+
+SQL> alter database backup controlfile to trace
+          as  '/home/oracle/coldbackup8/create_controlfile.sql';
+
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL> alter  system  checkpoint;
+
+#3. shutdown abort
+
+#4. 모든 datafile과 controlfile 과 redo log file 을 전부 삭제합니다.
+
+[yys:~]$ oradata
+
+[yys:yys]$ rm -rf *
+
+
+#5. startup <---  nomount  에서 더이상 올라가지 않습니다. 
+
+#6. shutdown abort
+
+#7. 백업받은 모든 datafile 들과 controlfile 들을 복원합니다.
+     ( redo logfile 만 빼로 복원합니다.)
+
+[yys:yys]$ cp /home/oracle/coldbackup8/*.dbf  .
+[yys:yys]$ cp /home/oracle/coldbackup8/*.ctl  .
+
+
+#8. startup mount
+
+startup mount 하고 나서
+
+#9. cancel base 불완전 복구를 시도합니다.
+
+recover  database  using  backup  controlfile  until  cancel;
+
+그냥 끝까지 엔터 엔터 치다가 에러가 나는 sequence 번호를 확인합니다.
+다시 recover 를 수행하면 그 에러났던 시퀀스 번호를 요청할겁니다.
+그때 cancel 하면 됩니다. 
+
+#10.  resetlogs 로 db 를 올립니다. 
+
+문제1.  coldbackup 을 다시 수행합니다. 

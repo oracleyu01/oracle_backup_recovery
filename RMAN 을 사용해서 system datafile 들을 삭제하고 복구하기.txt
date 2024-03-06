@@ -1,0 +1,21 @@
+
+▣ 예제28. RMAN 을 사용해서 system datafile 들을 삭제하고 복구하기
+
+ system  datafile 들이이란 ?  database 를 운영하기 위해서 필요한 data 들이 있는 파일들
+
+ 만약 이 파일들이 손상되면 mount 상태에서 복구 할 수 밖에  없습니다. 
+
+■ 실습
+#1.  shutdown abort 를 합니다.
+#2.  os 에서 system01.dbf 와  sysaux01.dbf 를 삭제합니다.
+#3.  startup 합니다. 
+#4.  select * from v$recover_file;
+#5.  RMAN으로 접속합니다.
+#6.  문제가 되는 data file을 복원합니다.
+RMAN>  restore  datafile  1,2; 
+
+#7. 문제가 되는 data file을 복구 합니다.
+RMAN> recover  datafile 1,2;
+
+#8. db 를 오픈 시킵니다.
+RMAN> alter database open;

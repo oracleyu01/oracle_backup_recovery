@@ -1,0 +1,183 @@
+
+▣ 예제.   cancel base 불완전  복구
+
+  복구의 종류 2가지 ?  1.  완전 복구 :  장애가 나기 직전에 최종적으로 commit 한
+                                                  시점으로 복구하는것 !
+
+                              2. 불완전 복구 : 과거의 특정 시점으로 복구
+
+                                   - time  base 불완전 복구
+                                   - cancel base 불완전 복구 
+
+ 1. 모든 data file 을 복원  <----   os 엔지니어(hp 엔지니어)
+
+ 2. recover database until time '시간';  <--- oracle 엔지니어
+
+ cancel base 불완전 복구 ?   1. current 나 active  redo  log  file 이 손상되었을때
+                                     2. 복구중에 archive log file 이 없으면 
+
+
+설명 그림 : https://cafe.daum.net/oracleoracle/SoDd/203
+
+설명:   current redo log file 이 깨져서 db 가 shutdown 되었다면
+         복구하는 방법이 과거에 백업받은 모든 data file 들을 다 복원하고
+         아카이브 로그 파일을 적용해서 복구를 하는데 
+          current redo log file 까지 적용해야 완전 복구가 되는데
+          current redo log file 이 없으므로  cancel base 불완전 복구를 해야합니다.
+          즉 current redo log file 만 적용 안하고 cancel 하겠다는 것입니다. 
+
+■ 실습:
+
+순서: 
+1. cold backup 수행합니다.
+2. 로그 스위치를 3번 일으키고 체크 포인트를 일으킵니다.
+3. 깨트릴 current redo log file 을 확인합니다.
+4. current redo  log group 의 멤버를 확인합니다.
+5. shutdown  abort
+6. os 에서 current redo log group 의 멤버를 모두 삭제 
+7. startup  <--- mount 단계에서 멈추는것 확인
+8. 문제가 되는 redo log file 의 현재 상태가 무엇인지 확인 
+9. shutdown abort
+10. 모든 data file들을 복원합니다. (기존 원본 data file 들을 rm 으로 지우고 복원)
+11. startup mount
+12. set autorecovery off  <--- 복구할 때 적용해야할 로그 파일을 하나씩 물어보게 설정
+13. recover   database  until  cancel; 
+    엔터를 치다가 current redo log file 을 적용하려 할때 cancel 이라고 씁니다.
+14. resetlogs 옵션을 써서 open 을 시킵니다.
+ 
+구현:
+1. cold backup 수행합니다.
+SQL> @datafile
+SQL> @controlfile
+SQL> @logfile
+SQL> shutdown immediate 
+
+$ cd
+$ mkdir  coldbackup5
+$ cd coldbackup5
+$ cp /u01/app/oracle/oradata/yys/*  .  
+
+2. 로그 스위치를 3번 일으키고 체크 포인트를 일으킵니다.
+
+SQL> startup
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL> alter system checkpoint; 
+
+3. 깨트릴 current redo log file 을 확인합니다.
+
+SQL> @log_status
+
+ GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 CURRENT                  10          2 NO
+         2 INACTIVE                  8           2 YES
+         3 INACTIVE                  9           2 YES
+
+설명:  1번이 current 입니다. 
+
+4. current redo  log group 의 멤버를 확인합니다.
+
+SQL> @logfile
+
+5. shutdown  abort
+6. os 에서 current redo log group 의 멤버를 모두 삭제 
+
+$ oradata
+[yys:yys]$ ls
+[yys:yys]$ rm redo01.log
+[yys:yys]$ rm redo01b.log
+
+7. startup  <--- mount 단계에서 멈추는것 확인
+
+ORA-00313: open failed for members of log group 1 of thread 1
+
+8. 문제가 되는 redo log file 의 현재 상태가 무엇인지 확인 
+
+yys(SYS) > @log_status
+
+    GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 CURRENT                  10          2 NO
+         3 INACTIVE                  9          2 YES
+         2 INACTIVE                  8          2 YES
+
+9. shutdown abort
+
+10. 모든 data file들을 복원합니다. (기존 원본 data file 들을 rm 으로 지우고 복원)
+
+$ oradata
+$ ls
+$ rm *.dbf
+$ cp /home/oracle/coldbackup5/*.dbf   .
+$ ls 
+
+11. startup mount
+
+12. set autorecovery off  <--- 복구할 때 적용해야할 로그 파일을 하나씩 물어보게 설정
+
+13. recover   database  until  cancel; 
+
+    엔터를 치다가 current redo log file 을 적용하려 할때 cancel 이라고 씁니다.
+
+14. resetlogs 옵션을 써서 open 을 시킵니다.
+ 
+SQL> alter  database open  resetlogs;
+
+불완전 복구를 한 후에는 반드시  cold backup 을 해야합니다.
+
+문제1. 불완전 복구 다 했으면 로그 스위치 3번일으키고 체크 포인트를 일으킨 후에
+         cold backup 합니다.
+
+정리:
+
+redo file 상태가 4가지 ?
+
+ 1.  unused  --->  한번도 사용하지 않은 상태
+ 2.  current  --->   현재 사용중인 상태
+ 3.  active   ---->   다썼는데 메모리의 내용이 data file 에 반영 안된 상태 
+ 4.  inactive   --->  다썼고 메모리의 내용이 data file 에 반영된 상태 
+
+위의 파일들이 삭제가 되었을 때 복구 방법 정리 ?
+
+1. unused --->  삭제되면 redo log group 을 drop 하고 완전 복구
+2. current --->  삭제되면  cancel base 불완전 복구
+3. active  --->   삭제되면  cancel base 불완전 복구
+4. inactive  ---> 삭제되면   redo log group 을 drop 하고 완전 복구
+
+문제2.  inactive 상태의 redo log file 이 손상되었을때 복구를 진행하시오 !
+
+#1. 현재 리두 로그 그룹의 상태를 확인합니다.
+SQL> @log_status
+
+#2. shutdown  abort
+#3. os 에서  inactive 상태의 redo log group 의 멤버를 모두 삭제합니다.
+
+[yys:yys]$ ls
+[yys:yys]$ rm redo03.log
+[yys:yys]$ rm redo03b.log?
+
+#4. startup <--- mount 에서 안올라옵니다.
+
+#5. startup mount 합니다.
+
+#6. 문제가 되고 있는 리두 로그 그룹을 drop 합니다.
+
+alter database  drop  logfile  group  3;
+
+alter database clear  unarchived  logfile  group  3; 
+
+#7. db를 올립니다. 
+
+alter  database open; 
+
+#8. 새로 리두로그 그룹을 추가합니다. 
+
+
+위의 파일들이 삭제가 되었을 때 복구 방법 정리 ?
+
+1. unused --->  삭제되면 redo log group 을 drop 하고 완전 복구
+2. current --->  삭제되면  cancel base 불완전 복구
+3. active  --->   삭제되면  cancel base 불완전 복구
+4. inactive  ---> 삭제되면   redo log group 을 drop 하고 완전 복구

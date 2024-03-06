@@ -1,0 +1,67 @@
+
+▣ 예제. RMAN 을 사용해서 Non system datafile 손상시 복구하기(open상태)
+
+■ 실습:
+순서:
+#1. shutdown abort 합니다.
+#2. os 에서 ts5000.dbf 를 삭제합니다.
+#3. startup 을 합니다.   <--- mount 에서 멈춥니다.
+#4. 복구해야할 파일이 무엇인지 조회합니다.
+#5. 해당 data file 을 offline 시킵니다.
+#6. db 를 오픈 시킵니다. 
+#7. rman 으로 접속합니다.
+#8. 문제가되는 파일을 복원합니다.
+#9. 문제가되는 파일을 복구합니다.
+#10. 해당 data file 을 online 시킵니다. 
+
+구현:
+#1. shutdown abort 합니다.
+#2. os 에서 ts5000.dbf 를 삭제합니다.
+#3. startup 을 합니다.   <--- mount 에서 멈춥니다.
+#4. 복구해야할 파일이 무엇인지 조회합니다.
+#5. 해당 data file 을 offline 시킵니다.
+
+alter  database  datafile  11  offline; 
+
+#6. db 를 오픈 시킵니다. 
+
+alter  database  open;
+
+#7. rman 으로 접속합니다.
+
+$ rman target sys/oracle nocatalog
+
+#8. 문제가되는 파일을 복원합니다.
+
+RMAN> restore datafile 11;
+
+#9. 문제가되는 파일을 복구합니다.
+
+RMAN> recover  datafile 11;
+
+#10. 해당 data file 을 online 시킵니다. 
+
+yys(SYS) > alter database datafile 11 online;
+
+문제1. 시스템이 아닌 테이블 스페이스 목록을 조회하시오 !
+
+ select  tablespace_name,  status
+   from  dba_tablespaces
+   where  tablespace_name  not like 'SYSTEM%'  and
+             tablespace_name  not like 'SYSAUX%'  and
+             tablespace_name  not  like  'UNDO%';
+
+------------------------------ ---------
+TEMP                           ONLINE
+USERS                          ONLINE
+EXAMPLE                        ONLINE
+TS01                             ONLINE
+TS02                             ONLINE
+CUPPANG01                      ONLINE
+CUPPANG02                      ONLINE
+CUPPANG03                      ONLINE
+TS5000                             ONLINE
+
+yys(SYS) > select tablespace_name, file_name
+                 from dba_data_files;
+
