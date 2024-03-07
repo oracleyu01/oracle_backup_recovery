@@ -45,4 +45,13 @@
 | 27 | system datafile 들을 삭제하고 RMAN 으로 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20system%20datafile%20%EB%93%A4%EC%9D%84%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 28 | 모든 datafile을 삭제하고 RMAN 으로 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%EB%AA%A8%EB%93%A0%20data%20file%EB%93%A4%EC%9D%84%20%EC%A0%84%EB%B6%80%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 29 | 모든 controlfile을 삭제하고 RMAN 으로 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%EB%AA%A8%EB%93%A0%20control%20file%20%EC%82%AD%EC%A0%9C%ED%95%98%EA%B3%A0%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
-
+| 30 | 모든 datafile 과 controlfile을 삭제하고 RMAN 으로 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%AA%A8%EB%93%A0%20data%20file%2C%20controlfile%2C%20redo%20logfile%20%EC%9D%B4%20%EC%82%AD%EC%A0%9C%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC.txt) |
+| 31 | 파라미터 파일이 손상되었을 때 RMAN 으로 복구하기  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0%20%ED%8C%8C%EC%9D%BC%EC%9D%B4%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20RMAN%20%EC%9C%BC%EB%A1%9C%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
+| 32 | RMAN 을 사용해서  time base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
+| 33 | RMAN 을 사용해서  cancel base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
+| 34 | XXX | [관련 코드]() |
+| 35 | XXX | [관련 코드]() |
+| 36 | XXX | [관련 코드]() |
+| 37 | XXX | [관련 코드]() |
+| 38 | XXX | [관련 코드]() |
+| 39 | XXX | [관련 코드]() |
