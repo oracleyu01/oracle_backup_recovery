@@ -107,6 +107,4 @@ yys(SYS) > @log_status
 
 #12. full backup 수행합니다. 
 
-
-오늘의 마지막 문제.   위의 작업을 다시 수행하는데 모든 redo log file들을 전부 삭제하고
-                            위와 똑같이 cancel base 불완전 복구를 하시오 !
+문제.   위의 작업을 다시 수행하는데 모든 redo log file들을 전부 삭제하고 위와 똑같이 cancel base 불완전 복구를 하시오 !
