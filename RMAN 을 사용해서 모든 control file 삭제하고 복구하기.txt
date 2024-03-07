@@ -1,0 +1,125 @@
+
+▣ 예제30. RMAN 을 사용해서 모든 control file 삭제하고 복구하기 (이수자 평가 제출물)
+
+■ 장애 상황 시나리오
+
+ ※ 현장에서의 경험:
+
+ 테이블 스페이스에 공간을 추가할 때 무리하게 여러개의 DATA FILE을 한번에 넣어서
+ 추가를 하게 되면 control file 이 깨지는 현상이 발생할 확률이 높습니다.
+
+ 그림설명 : https://cafe.daum.net/oracleoracle/SoDd/237
+
+■ 실습
+
+- 순서:
+
+#1. 먼저 현재 database 의 db id 를 조회합니다.
+#2. 컨트롤 파일을 생성하는 스크립트를 생성합니다.
+#3. RMAN 으로 접속해서 control file 이 자동 백업되겠금 설정합니다.
+#4. RMAN 에서 datafile 중에 아무거나 하나를 백업 받습니다. 
+#5. controlfile 을 직접 RMAN 으로 백업을 받습니다. 
+#6. controlfile 의 위치를 확인합니다.
+#7. shutdown abort 를 합니다.
+#8. 모든 controlfile 을 전부 삭제합니다.
+#9. startup
+#10. shutdown  abort 
+#11. startup  nomount
+#12. RMAN 으로 접속합니다.
+#13. control file 을 rman 으로 복원합니다.
+#14. alter  database mount 로 올립니다.
+#15. recover database 를 수행합니다.
+#16. db 를 open 으로 올립니다. 
+
+
+- 구현:
+
+#1. 먼저 현재 database 의 db id 를 조회합니다.
+
+SQL > select dbid
+        from v$database;
+
+      DBID
+--------------
+4149071123
+
+#2. 컨트롤 파일을 생성하는 스크립트를 생성합니다.
+
+SQL>  alter  database  backup  controlfile  to  trace   
+         as  '/home/oracle/create_controlfile_20240307.sql';
+
+#3. RMAN 으로 접속해서 control file 이 자동 백업되겠금 설정합니다.
+
+RMAN> configure  controlfile  autobackup  on;
+
+설명:  RMAN 으로 앞으로 어떤 파일을 백업 받던 백업 받을 때 마다 controlfile 이
+        자동 백업 되어집니다.  위와 같이 설정을 해놓으면 앞으로 db 의 구조가 변경될 때마다
+        RMAN 이 컨트롤 파일을 자동 백업합니다. 
+
+#4. RMAN 에서 datafile 중에 아무거나 하나를 백업 받습니다. 
+
+RMAN> backup  datafile  1;
+
+#5. controlfile 을 직접 RMAN 으로 백업을 받습니다. 
+
+RMAN> backup   current  controlfile; 
+
+#6. controlfile 의 위치를 확인합니다.
+
+$ cd
+SQL> @controlfile
+
+#7. shutdown abort 를 합니다.
+
+#8. 모든 controlfile 을 전부 삭제합니다.
+
+[yys:yys]$ rm control01.ctl
+[yys:yys]$ rm control02.ctl
+[yys:yys]$ rm control03.ctl
+
+#9. startup
+#10. shutdown  abort 
+#11. startup  nomount
+#12. RMAN 으로 접속합니다.
+
+[yys:~]$ rman target sys/oracle nocatalog
+
+설명:  주로 지금까지 mount 상태에서 rman 으로 접속을 했었습니다.
+         복구는 항상 mount 상태에서 진행해야하기 때문입니다.
+        그런데 위와 같이 nomount 상태에서도 RMAN으로 접속할 수 있습니다.
+
+#13. control file 을 rman 으로 복원합니다.
+
+RMAN> restore  controlfile  from  autobackup;
+
+#14. alter  database mount 로 올립니다.
+
+RMAN> alter database mount;
+
+설명:  control file 을 복원했다고 바로 mount 가 되는건 아닙니다. 따로 mount 시켜줘야합니다.
+
+#15. recover database 를 수행합니다.
+
+RMAN> recover  database; 
+
+설명:  복원한 control file 이 옛날 파일이기 때문에 복구를 해서 최신 파일로 만들어줘야합니다.
+
+#16. db 를 resetlogs 로 open 으로 올립니다. 
+
+SQL>  alter  databse open  resetlogs;
+
+설명:   controlfile 을 복구 한다는 것은 교실로 치면 새로운 선생님이 온거기 때문에
+         다시 reset 해야합니다. 
+
+#17.  resetlogs 로 db 를 열었으면 반드시 full backup 을 수행해야합니다.
+
+RMAN> backup  database; 
+
+문제1.  (이수자 평가 5번 문제)  control file 3개중에 2개를 삭제하고 RMAN으로 복구하시오.
+         위의 작업을 다시 수행하는데 이번에는 controlfile 을 2개만 삭제하세요 ~
+
+ 여러분들 영문 이니셜이 보이게 select name from v$controlfile;
+ 
+ rman> list  backup  of  controlfile;
+
+ 위의 2개의 결과를 캡쳐해서 제출하세요 ~~
