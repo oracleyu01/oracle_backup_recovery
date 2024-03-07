@@ -1,0 +1,111 @@
+
+▣ 예제. RMAN 을 사용해서  time base 불완전 복구하기
+
+■ 장애 시나리오 
+
+ 그림설명 : https://cafe.daum.net/oracleoracle/SoDd/264
+
+ 설명:   만약 금요일 12시에 scott 유져를 drop 했다면 11시 59분으로 db 를 되돌려야
+           하는데 그러려면 과거에 백업받은 모든 datafile 들을 다 복원하고 
+           아카이브 로그파일을 하나씩 적용해서 복구를 하는데 11시 59분까지 
+           시간 기반 불완전 복구를 하면 됩니다.
+
+■ 실습:
+순서:
+#1. RMAN 으로 full backup 을 수행합니다.
+#2. .bash_profile 에 nls_date_format 파라미터를 지정해서
+     오라클에서 날짜를 검색할 때 시분초가 기본값으로 보이게 셋팅합니다.
+#3. 로그 스위치를 3번 정도 일으킵니다.
+#4. 체크 포인트를 일으킵니다. 
+#5. 현재 시간을 확인합니다.
+#6. scott 유져를 drop 합니다.
+#7. shutdown immediate 로 db 를 내립니다.
+#8. startup mount 를 합니다. 
+#9. rman 으로 불완전 복구를 합니다.
+#10. resetlogs 로 db 를 올립니다. 
+
+구현:
+#1. RMAN 으로 full backup 을 수행합니다.
+
+RMAN> report  obsolete;
+RMAN> delete obsolete;
+RMAN> backup database;
+
+#2. .bash_profile 에 nls_date_format 파라미터를 지정해서
+     오라클에서 날짜를 검색할 때 시분초가 기본값으로 보이게 셋팅합니다.
+
+$ cd
+$ vi  .bash_profile
+
+NLS_LANG=american_america.we8iso8859p15
+NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS'
+export NLS_LANG
+export NLS_DATE_FORMAT
+
+$ source .bash_profile
+
+#3. 로그 스위치를 3번 정도 일으킵니다.
+
+yys(SYS) > @logsw
+yys(SYS) > @logsw
+yys(SYS) > @logsw
+
+#4. 체크 포인트를 일으킵니다. 
+
+yys(SYS) > alter system checkpoint;
+
+#5. 현재 시간을 확인합니다.
+
+yys(SYS) > select sysdate from dual;
+
+SYSDATE
+-------------------
+2024/03/07:15:05:01
+
+#6. scott 유져를 drop 합니다.
+
+yys(SYS) > drop  user  scott cascade;
+
+#7. shutdown immediate 로 db 를 내립니다.
+
+#8. startup mount 를 합니다. 
+
+#9. rman 으로 불완전 복구를 합니다.
+
+RMAN> run { set until time='2024/03/07:15:05:01' ;
+                  restore  database;
+                  recover  database; 
+                 } 
+
+Finished recover at 2024/03/07:15:12:17
+
+#10. resetlogs 로 db 를 올립니다. 
+
+yys(SYS) > alter database open resetlogs;
+
+#11. scott 으로 접속되는지 확인하세요.
+
+yys(SYS) > connect scott/tiger
+Connected.
+
+scott 유져를 drop 한 시간을 잘 모르겠다. 괜찮습니다. 다 전문가들이 다 알아냅니다.
+로그 마이너(logminer) 를 이용하면 리두로그 파일과 아카이브 로그 파일을 분석할 수
+있습니다. 그래서 drop user scott cascade 명령어를 수행한 시간을 알아낼 수 있습니다.
+
+불완전 복구 후에 반드시 해야할것이 뭐죠 ?     full backup 
+
+문제1.  짝꿍이랑 자리를 바꾸기 전에 내 db 에 scott 유져로 접속해서 현재 시간을
+          다음과 같이 확인합니다. 여러분들 노트에 잘 적어놓으세요.
+
+select  sysdate from dual;
+
+2024/03/07:15:21:16
+
+문제2. 짝꿍이랑 자리를 바꿉니다.  짝꿍의 scott 유져로 접속해서  emp, dept  테이블을
+         purge 옵션 써서 모두 drop 하고 자리로 돌아옵니다.
+        자리로 돌아와서 time base 불완전 복구를 하세요 ~
+
+
+
+
+
