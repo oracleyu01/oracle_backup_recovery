@@ -1,0 +1,102 @@
+
+▣ 예제29. RMAN 을 사용해서 모든 data file들을 전부 삭제하고 복구하기
+
+■ 장애 상황 시나리오 
+
+그림설명 : https://cafe.daum.net/oracleoracle/SoDd/236
+
+* 지금 현재 data file 들이 전부 online 되어있는지 확인
+
+SQL> select  file#, status  from  v$datafile;
+
+SQL> alter  database  datafile  번호  online; 
+
+■ 실습
+
+#1. 데이터 파일들의 위치를 확인합니다.
+
+SQL> @datafile
+
+#2. 컨트롤 파일들의 위치를 확인합니다.
+
+SQL> @controlfile 
+
+#3. 리두 로그 파일들의 위치를 확인합니다.
+
+SQL> @logfile 
+
+#4. RMAN 으로 접속해서 RMAN 이 DB 의 구조를 알고 있는지 확인합니다.
+
+$ rman target  sys/oracle  nocatalog 
+
+RMAN>  report  schema;
+
+질문: RMAN 이 어떻게 database 구조를 알고 있나 ?
+
+답:  control file 의 내용을 보고 알고 있는것입니다. 
+     report schema 를 하면 controlfile 을 조회하는 것입니다.
+     rman 접속할 때 nocatalog 옵션을 써서 접속을 하게 되면  control file 을 이용해서
+     db 정보를 rman 이 알게 됩니다. 
+
+#5. RMAN 으로 full backup 을 수행합니다.
+
+RMAN>  backup  database  include  current  controlfile;
+
+설명:  db 전체 백업이기 때문에 위의 명령어를 수행하기 전에 먼저 fast recovery area 영역의
+        공간이 부족하지 않은지 먼저 확인하고 실행해야 합니다.
+
+RMAN> list  backup  ;
+
+* fast recovery area 영역 공간 확인 
+
+SELECT 
+    NAME, 
+    SPACE_LIMIT / 1024 / 1024 AS "Space Limit (MB)", 
+    SPACE_USED / 1024 / 1024 AS "Space Used (MB)", 
+    SPACE_RECLAIMABLE / 1024 / 1024 AS "Space Reclaimable (MB)", 
+    NUMBER_OF_FILES AS "Files"
+FROM 
+    V$RECOVERY_FILE_DEST;
+
+
+#6. shutdown abort 로 db 를 내립니다.
+#7. 모든 data file 들을 전부 삭제합니다.
+
+[yys:~]$ oradata
+[yys:yys]$
+[yys:yys]$ ls
+[yys:yys]$ rm *.dbf
+
+#8. startup  을 시도 합니다.
+#9. 복구해야할 파일들이 무엇인지 확인합니다.
+
+SQL> select *
+         from v$recover_file;
+
+#10. 전체 데이터 파일들을 복원합니다.
+
+$ rman  target  sys/oracle nocatalog
+
+RMAN> list failure;
+
+RMAN> restore  database;
+
+#11. 전체 데이터 파일들을 복구합니다.
+
+RMAN> recover  database;
+
+#12. alter  database open 으로 db 를 올립니다.
+
+RMAN> alter database open;
+
+문제1. 로그 스위치를 3번 일으키고 체크 포인트를 수동으로 일으킵니다.
+        그리고  원본 데이터 파일들중 3개 이상 rm 으로 삭제하고 rman 으로 복구하시오!
+
+SQL> @logsw
+SQL> @logsw
+SQL> @logsw
+SQL> alter  system  checkpoint;
+SQL> shutdown abort
+$ oradata
+$ rm  system01.dbf
+$ rm  sysaux01.dbf
