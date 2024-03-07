@@ -1,0 +1,95 @@
+▣ 예제. 파라미터 파일이 손상되었을 때 RMAN 으로 복구하기 
+
+ - 파라미터 파일의 종류 2가지 ?   1.  spfile  : binary  file
+                                            2.  pfile   :  text  file
+
+  $ORACLE_HOME/dbs 밑에 spfile 과 pfile 이 2개가 동시에 있으면
+  오라클은 spfile 을 우선적으로 읽어서 startup 할 때 인스턴스를 구성합니다.
+
+그림설명: https://cafe.daum.net/oracleoracle/SoDd/263
+
+설명:  parameter file 이 없으면 startup 할 때  shutdown 에서 아무단계로 
+        올라갈 수 가 없습니다.  
+
+■  실습
+
+순서
+#1.  database 의 id 를 확인합니다. 
+#2.  RMAN 에서  spfile 을 백업 받습니다.
+#3.  shutdown  abort
+#4.  os 에서 spfile 과 pfile 을 둘 다 삭제합니다.
+#5.  startup
+#4.  rman 으로 접속해서 바로 nomount 로 올립니다. 
+#5.  백업 받은 spfile 을 복원합니다.
+#6.  startup  force
+
+
+구현
+#1.  database 의 id 를 확인합니다. 
+
+SQL> select  dbid  from v$database; 
+
+      DBID
+----------
+4149071123
+
+#2.  RMAN 에서  spfile 을 백업 받습니다.
+
+$ rman target sys/oracle nocatalog
+
+RMAN> backup spfile;
+
+#3.  shutdown  abort
+
+#4.  os 에서 spfile 과 pfile 을 둘 다 삭제합니다.
+
+[yys:~]$ dbs
+[yys:dbs]$ ls -l spfileyys.ora
+[yys:dbs]$ ls -l inityys.ora
+
+[yys:dbs]$ rm spfileyys.ora
+[yys:dbs]$ rm inityys.ora
+
+#5.  startup
+
+#4.  rman 으로 접속해서 바로 nomount 로 올립니다. 
+
+[yys:~]$ rman target sys/oracle nocatalog
+
+RMAN> set dbid=4149071123;
+
+RMAN> startup nomount
+
+설명: 파라미터 파일 없이 RMAN이 스스로 nomount 로 인스턴스를 올렸습니다.
+        nomount 로 올린 이유는 shutdown 된 상태에서는 아무것도 할 수 없기 때문입니다.
+
+#5.  백업 받은 spfile 을 복원합니다.
+
+RMAN> restore   spfile  from  autobackup;
+
+RMAN-06172: no AUTOBACKUP found or specified handle is not a valid copy or piece
+
+위와 같이 에러가 발생하면 
+
+RMAN> list  backup  of  spfile;
+
+이것도 에러가 발생하므로  직접 os 에 가서 spfile 백업본을 찾아야합니다.
+
+RMAN> restore  spfile  from  '/u01/app/oracle/flash_recovery_area/YYS/backupset/2024_03_07/o1_mf_nnsnf_TAG20240307T135210_lylkztyf_.bkp';
+
+#6.  startup  force 합니다. 
+
+RMAN> startup force
+
+문제1. 짝꿍과 자리를 바꾸기 전에 spfile 과 controlfile 을 단단히 다음과 같이 백업 받으시오.
+         그리고 짝꿍과 자리를 바꾸세요 !
+
+RMAN>  backup   spfile;
+
+RMAN>  backup  current  controlfile;
+
+문제2.  짝꿍의 db 를  shutdown abort 하고   아래의 3개중에 하나를 수행하시오 !
+
+ 1. spfile 과 pfile 을 모두 삭제합니다.
+ 2. 모든 controlfile 을 전부 삭제합니다. 
+ 3. spfile 과 pfile 과 모든 controlfile을 전부 삭제합니다.
