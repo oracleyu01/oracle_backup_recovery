@@ -1,0 +1,70 @@
+
+▣ 예제.  recovery catalog 를 별도의 database 에 구성하기
+
+순서:
+
+#1. orcl 쪽에 sys 로 접속해서 rc_ts 테이블 스페이스를 생성합니다.
+#2. rc_user 를 생성하고 recovery_catalog_ower 권한을 부여합니다.
+#3. recovery catalog 를 생성합니다.
+#4. recovery catalog db 에 target db를 등록합니다. 
+
+구현:
+
+#1. orcl 쪽에 sys 로 접속해서 rc_ts 테이블 스페이스를 생성합니다.
+
+orcl(SYS) > create  tablespace  rc_ts
+               datafile  '+data'  size 200m;
+
+#2. rc_user 를 생성하고 recovery_catalog_ower 권한을 부여합니다.
+
+orcl(SYS) > create  user  rc_user
+                identified  by  rc_user
+                default  tablespace  rc_ts; 
+
+orcl(SYS) > grant  recovery_catalog_owner  to  rc_user;
+orcl(SYS) > grant  unlimited  tablespace   to  rc_user; 
+
+#3. recovery catalog 를 생성합니다.
+
+$ rman  catalog  rc_user/rc_user
+
+RMAN> create  catalog  tablespace  rc_ts;
+
+#4. recovery catalog db 에 target db를 등록합니다. 
+
+[orcl:yys]$ lsnrctl start
+
+[orcl:yys]$ lsnrctl  status 
+
+[orcl:yys] net
+[orcl:admin]$ pwd
+/u01/app/oracle/product/11.2.0/dbhome_1/network/admin
+
+[orcl:admin]$ ls  -l  tnsnames.ora
+
+yys =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = edydr1p0.us.oracle.com)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = yys)
+    )
+  )
+
+orcl =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = edydr1p0.us.oracle.com)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.us.oracle.com)
+    )
+  )
+
+
+$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> register database;
+
+database registered in recovery catalog
+starting full resync of recovery catalog
+full resync complete
