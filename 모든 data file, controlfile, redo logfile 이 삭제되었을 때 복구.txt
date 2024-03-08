@@ -3,9 +3,6 @@
 
  그림 설명: https://cafe.daum.net/oracleoracle/SoDd/205
 
-![그림](https://cafe.daum.net/oracleoracle/SoDd/205)
-
-
 설명:  모든 datafile 과 controlfile 과 redo logfile 이 전부 삭제 되었다면
         current redo log file 도 삭제된 상태 입니다.
         월요일에 백업받은 datafile 들과 controlfile 들 모두 복원합니다.
