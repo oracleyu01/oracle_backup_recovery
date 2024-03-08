@@ -1,0 +1,160 @@
+
+▣ 예제35. RMAN 을 사용하지 않고 백업본이 없을 때 복구 방법 
+
+■ 장애 상황 시나리오 
+
+  그림설명 : https://cafe.daum.net/oracleoracle/SoDd/289
+
+   설명:   백업을 받지 않은 data file 이 손상되었을때 복구 방법은  먼저 빈 파일을 하나 만들고
+             여기에 아카이브 로그 파일을 적용해서 복구를 하면 됩니다.
+             빈 파일명은 기존 파일명과 다르게 지어주면 됩니다. 
+
+■ 실습
+
+순서
+#1.  ts07 이라는 테이블 스페이스를 생성합니다.
+#2.  scott 유져로 접속해서 ts07 테이블 스페이스에 emp07 테이블 생성합니다.
+#3.  emp07 테이블에 데이터를 입력하고 로그 스위치를 일으킵니다. (3번 반복)
+#4.   ts07 테이블 스페이스를 백업하지 말고 바로 shutdown immediate 를 합니다. 
+#5.  os 에서 ts07.dbf 를 삭제를 합니다. (백업본이 없는데 삭제하는것 입니다.)
+#6.  startup 
+#7.  복구해야할 파일을 조회를 합니다. 
+#8.  ts07.dbf 를 위한 빈 껍데기 파일을 생성합니다.
+#9.  복구해야할 파일을 조회를 합니다. 
+#10. 일단 db 를 open 시키기 위해서 문제가 된 해당 데이터 파일을 offline 시킵니다.
+#11.  open 으로 db 를 올립니다.
+#12. ts07 테이블 스페이스를 recover 합니다. 
+#13. 복구된 data file 을 online 시켜줍니다.
+#14. scott 유져에서 emp07 테이블이 잘 조회되는지 확인을 합니다.
+
+
+구현:
+#1.  ts07 이라는 테이블 스페이스를 생성합니다.
+
+create  tablespace  ts07
+   datafile  '/u01/app/oracle/oradata/yys/ts07.dbf'  size  10m;
+
+#2.  scott 유져로 접속해서 ts07 테이블 스페이스에 emp07 테이블 생성합니다.
+
+connect scott/tiger
+
+create  table  emp07
+( empno  number(10),
+  ename   varchar2(20) )
+  tablespace  ts07;
+
+#3.  emp07 테이블에 데이터를 입력하고 로그 스위치를 일으킵니다. (3번 반복)
+
+insert  into  emp07  values(1111,'aaa' );
+commit;
+alter  system switch  logfile;
+
+alter  system checkpoint;
+
+#4.   ts07 테이블 스페이스를 백업하지 말고 바로 shutdown immediate 를 합니다. 
+
+yys(SCOTT) > connect / as sysdba
+
+yys(SYS) > shutdown immediate
+
+#5.  os 에서 ts07.dbf 를 삭제를 합니다. (백업본이 없는데 삭제하는것 입니다.)
+
+[yys:~]$ oradata
+[yys:yys]$ ls -l ts07.dbf
+
+[yys:yys]$ rm ts07.dbf
+
+#6.  startup 
+
+#7.  복구해야할 파일을 조회를 합니다. 
+
+select * from v$recovery_file;
+
+#8.  ts07.dbf 를 위한 빈 껍데기 파일을 생성합니다.
+
+alter  database  create   datafile  '/u01/app/oracle/oradata/yys/ts07.dbf'  
+  as  '/u01/app/oracle/oradata/yys/ts07b.dbf'; 
+
+#9.  복구해야할 파일을 조회를 합니다. 
+
+select  * from v$recover_file;
+
+설명: 12번 파일이 file not found 가 아니라 그냥 online 이라고 출력됩니다. 
+
+#10. 일단 db 를 open 시키기 위해서 문제가 된 해당 데이터 파일을 offline 시킵니다.
+
+alter  database   datafile   '/u01/app/oracle/oradata/yys/ts07b.dbf'   offline; 
+
+#11.  open 으로 db 를 올립니다.
+
+alter  database  open;
+
+#12. ts07 테이블 스페이스를 recover 합니다. 
+
+recover   tablespace   ts07;
+
+#13. 복구된 data file 을 online 시켜줍니다.
+
+alter  database  datafile  '/u01/app/oracle/oradata/yys/ts07b.dbf'  online; 
+
+#14. scott 유져에서 emp07 테이블이 잘 조회되는지 확인을 합니다.
+
+connect scott/tiger
+
+select * from  emp07;
+
+문제1.  아래의  테이블 스페이스 3개를 생성하시오 !
+
+ create  tablespace  ts81
+   datafile  '/u01/app/oracle/oradata/yys/ts81.dbf'  size  5m;
+
+ create  tablespace  ts82
+   datafile  '/u01/app/oracle/oradata/yys/ts82.dbf'  size  5m;
+
+ create  tablespace  ts83
+   datafile  '/u01/app/oracle/oradata/yys/ts83.dbf'  size  5m;
+
+문제2.  scott 유져로 접속해서 위의 테이블 스페이스 3개에  테이블을 각각 3개를 생성하시오 
+
+connect scott/tiger
+
+create   table  emp81
+tablespace  ts81
+as
+  select * from emp;
+
+create   table  emp82
+tablespace  ts82
+as
+  select * from emp;
+
+create   table  emp83
+tablespace  ts83
+as
+  select * from emp;
+
+문제3.  로그 스위치를 3번 일으키고 체크 포인트를 일으키시오 !
+
+
+문제4.  shutdown immediate 하고 os 에서  ts81.dbf 와 ts82.dbf 를 삭제하시오 !
+
+[yys:yys]$ oradata
+[yys:yys]$
+[yys:yys]$ rm ts81.dbf
+[yys:yys]$ rm ts82.dbf
+
+문제5.  복구를 하고 나서  emp81 테이블과 emp82 테이블이 잘 조회되는지 확인하시오 !
+
+alter  database  create   datafile  '/u01/app/oracle/oradata/yys/ts81.dbf'  
+  as  '/u01/app/oracle/oradata/yys/ts81b.dbf'; 
+
+alter  database  create   datafile  '/u01/app/oracle/oradata/yys/ts82.dbf'  
+  as  '/u01/app/oracle/oradata/yys/ts82b.dbf'; 
+
+alter database datafile 13 offline ;
+alter database datafile 14 offline;
+alter database open;
+recover tablespace  ts81;
+recover tablespace  ts82;
+alter database datafile 13 online ;
+alter database datafile 14 online;
