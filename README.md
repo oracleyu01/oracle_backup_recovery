@@ -11,7 +11,7 @@
 ## 수업 자료 (업데이트: 2024.03.04)
 
 | 순서 | 항목 | 코드 |
-|-----|------|------|
+|--------|-------------------------------------------------------------|--------------------|
 |     |**1. 사용자 관리 백업하기**   |
 | 1.1 | 아카이브 모드로 변경하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%20%EB%AA%A8%EB%93%9C%20%EB%B3%80%EA%B2%BD.txt) |
 | 1.2 | cold  backup 수행하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/cold%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt) |
