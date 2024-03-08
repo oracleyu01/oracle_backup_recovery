@@ -50,9 +50,9 @@
 | 5.6 | 파라미터 파일이 손상되었을 때 RMAN 으로 복구하기  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0%20%ED%8C%8C%EC%9D%BC%EC%9D%B4%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20RMAN%20%EC%9C%BC%EB%A1%9C%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 5.7 | RMAN 을 사용해서  time base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 5.8 | RMAN 을 사용해서  cancel base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
-| 34 | XXX | [관련 코드]() |
-| 35 | XXX | [관련 코드]() |
-| 36 | XXX | [관련 코드]() |
-| 37 | XXX | [관련 코드]() |
-| 38 | XXX | [관련 코드]() |
-| 39 | XXX | [관련 코드]() |
+| 5.9 |      | [관련 코드]() |
+| 5.10 |     | [관련 코드]() |
+| 5.11 |    | [관련 코드]() |
+| 5.12 |    | [관련 코드]() |
+| 5.13 |    | [관련 코드]() |
+| 5.14 |   | [관련 코드]() |
