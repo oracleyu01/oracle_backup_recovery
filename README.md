@@ -51,7 +51,7 @@
 | 5.7 | RMAN 을 사용해서  time base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 5.8 | RMAN 을 사용해서  cancel base 불완전 복구하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%B4%EC%84%9C%20%20cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%ED%95%98%EA%B8%B0.txt) |
 | 5.9 | RMAN 을 사용하지 않고 백업본이 없을 때 복구 방법      | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%98%EC%A7%80%20%EC%95%8A%EA%B3%A0%20%EB%B0%B1%EC%97%85%EB%B3%B8%EC%9D%B4%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
-| 5.10 |     | [관련 코드]() |
+| 5.10 |  RMAN 을 사용하지 않고 백업본이 없을 때 복구 방법   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%96%88%EC%9D%84%20%EB%95%8C%20%EB%B0%B1%EC%97%85%EB%B3%B8%EC%9D%B4%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
 | 5.11 |    | [관련 코드]() |
 | 5.12 |    | [관련 코드]() |
 | 5.13 |    | [관련 코드]() |
