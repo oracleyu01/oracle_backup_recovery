@@ -1,0 +1,127 @@
+
+▣ 예제36. RMAN 을 사용했을 때 백업본이 없을 때 복구 방법
+
+■ 실습:
+
+순서:
+#1. ts91 테이블 스페이스를 생성합니다
+#2. ts91 테이블 스페이스에  emp91 테이블을 scott 유져에서 생성합니다.
+#3. 데이터를 emp91 테이블에 입력하고 로그 스위치를 일으킵니다.(3번반복)
+#4. shutdown  abort
+#5. os 에서  ts91.dbf 를 삭제를 합니다. 
+#6. startup
+#7. 복구해야할 파일이 뭔지 조회합니다.
+#8. 문제가 되는 데이터 파일을 offline 시킵니다.
+#9. db 를 오픈 시킵니다.
+#10. RMAN 으로 접속합니다. 
+#11. 문제가 되는 데이터 파일 번호를 가지고 restore 를 합니다.
+#12. 문제가 되는 데이터 파일 번호를 가지고 recover 를 합니다. 
+#13. emp91 테이블이 잘 조회되는지 확인하시오 
+
+
+구현:
+#1. ts91 테이블 스페이스를 생성합니다
+
+create  tablespace  ts91
+  datafile '/u01/app/oracle/oradata/yys/ts91.dbf' size 5m;
+
+#2. ts91 테이블 스페이스에  emp91 테이블을 scott 유져에서 생성합니다.
+
+connect  scott/tiger
+
+create  table  emp91
+( empno   number(10),
+  ename   varchar2(10) )
+ tablespace   ts91;
+
+
+#3. 데이터를 emp91 테이블에 입력하고 로그 스위치를 일으킵니다.(3번반복)
+
+insert  into emp91  values(1111,'aaa');
+
+alter  system  switch  logfile;
+
+alter  system checkpoint;
+
+#4. shutdown  abort
+
+#5. os 에서  ts91.dbf 를 삭제를 합니다. 
+
+[yys:yys]$ oradata
+[yys:yys]$ ls -l ts91.dbf
+[yys:yys]$ rm ts91.dbf
+
+#6. startup
+
+#7. 복구해야할 파일이 뭔지 조회합니다.
+
+yys(SYS) > select * from v$recover_file;   <-- file not found
+
+yys(SYS) > select file#, name
+                from v$datafile
+               where file#=16;
+
+#8. 문제가 되는 데이터 파일을 offline 시킵니다.
+
+yys(SYS) > alter  database  datafile  16  offline; 
+
+#9. db 를 오픈 시킵니다.
+
+yys(SYS) > alter database open;
+
+#10. RMAN 으로 접속합니다. 
+
+#11. 문제가 되는 데이터 파일 번호를 가지고 restore 를 합니다.
+
+RMAN> restore datafile 16;
+
+#12. 문제가 되는 데이터 파일 번호를 가지고 recover 를 합니다. 
+
+RMAN> recover  datafile  16;
+
+#13.  복구한 datafile 을  online 시키시오 
+
+SQL> alter   database   datafile  16   online; 
+
+#13. emp91 테이블이 잘 조회되는지 확인하시오 
+
+SQL> select * from emp91;
+
+     EMPNO ENAME
+---------- ----------
+      1111 aaa
+      1111 aaa
+      1111 aaa
+
+정리: RMAN 을 이용하면 백업본이 있든 없든 다 복구가 됩니다.
+
+       다만 반드시 '아카이브 모드' 여야지만 가능 합니다.
+
+문제1.  아래의 테이블 스페이스를 생성하시오 !
+
+create  tablespace  ts95
+  datafile  '/u01/app/oracle/oradata/yys/ts95.dbf'  size  5m;
+
+create  tablespace  ts96
+  datafile  '/u01/app/oracle/oradata/yys/ts96.dbf'  size  5m;
+
+문제2.  로그 스위치를 3번 일으키고  체크 포인트를 일으킵니다.
+
+yys(SYS) > alter system switch logfile;
+
+System altered.
+
+yys(SYS) > alter system switch logfile;
+
+System altered.
+
+yys(SYS) > alter system checkpoint;
+
+문제3. 짝꿍과 자리를 바꾸세요 ~~
+
+SQL> @/home/oracle/datafile.sql
+
+지우고 싶은 파일 3개를 골라서 삭제하고  shutdown abort 로 db 를 내리고 자리로 돌아오세요
+
+select  file#, status
+  from v$datafile;
