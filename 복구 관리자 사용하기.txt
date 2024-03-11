@@ -1,0 +1,57 @@
+▣ 예제.  복구 관리자 사용하기
+
+ 아래의 3개의 명령어만 알고 있으면 장애가 났을때 복구를 쉽게할 수 있습니다.
+ 복구 어드바이져가 복구를 해줍니다.
+
+1.  현재 장애 상황을 레포트 해라 !
+
+RMAN>  list  failure;
+
+2. 해결방법을 알려달라 !
+
+RMAN> advise  failure;
+
+3. advise 한데로 복구해라 !
+
+RMAN> repair failure; 
+
+■ 실습
+#1. fullbackup 을 수행합니다.
+
+[yys:~]$  rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> backup database;
+
+#2.  datafile 을 4개 이상 rm 으로 삭제하고 shutdown abort 합니다. 
+yys(SYS) > @datafile
+$oradata
+[yys:yys]$ rm ts02.dbf
+[yys:yys]$ rm ts07b.dbf
+[yys:yys]$ rm ts01.dbf
+[yys:yys]$ rm ts83.dbf
+
+#3.  startup 
+#4.  복구 어드바이져를 이용해서 복구합니다.
+
+RMAN>  list  failure;
+RMAN>  advise  failure;
+RMAN>  repair  failure;
+
+#5.  alter  database open 으로 db 를 올립니다. 
+
+※  복구 어드바이져는 RAC 환경에서는 사용할 수 없습니다. 
+    불완전 복구는 스스로 사람이 해야합니다. 
+
+문제1.  ts7001 이라는 테이블 스페이스를 생성하시오 !
+
+create  tablespace  ts7001
+  datafile  '/u01/app/oracle/oradata/yys/ts7001.dbf'  size  10m;
+
+문제2.  로그 스위치를 3번 일으키고 체크포인트를 일으키시오 !
+
+
+문제3. os 에 가서 ts7001.dbf 를 rm 으로 날리고 shutdown abort 를 하세요 !
+
+
+문제4.  startup 하고 복구 어드바이져로 복구해보시오 ! 
+          (백업본이 없는데 복구가 되는지 확인하세요 )

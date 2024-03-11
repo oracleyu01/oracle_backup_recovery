@@ -1,0 +1,270 @@
+▣ 예제.   Recovery catalog 를 사용했을때 사용할 수 있는 알맨 명령어 
+
+ Rman 을 사용했을때의 엄청난 장점 ?   더 지능적으로 백업과 복구를 수행할 수 있다.
+  
+ 1. catalog 명령어(p3-14):  RMAN 으로 백업 받지 않은 일반 백업본을 rman으로 
+                                  복구할 때 사용할 수 있도록 등록하는 명령어 
+
+ 2. resync  catalog 명령어 : target db 의 controlfile 의 내용을 recovery catalog 에게
+                                   알려주며 동기화하는 명령어 
+
+ 3. change  명령어: recovery catalog 에 등록된 백업정보를 지울 때 사용하는 명령어 
+
+ 4. crosscheck 명령어: 백업을 확실하게 받지 않으면 나중에 알맨으로 복원,복구할때
+                             해당 백업본이 없다고 하면서 자꾸 에러가 나면서 복원,복구를
+                             못하는 경우가 생기는것을 미리 예방하기 위한 명령어.
+
+ 5. list 명령어 :  백업본의 목록을 확인할 때 사용하는 명령어 
+
+ 6. report 명령어 : list 명령어보다 더 지능적인 결과를 보여주는 명령어 
+                        예:  백업이 필요한 파일들이 뭔지 보여줘 ~
+
+■ 1. catalog 명령어 실습 
+
+  "RMAN 으로 백업 받지 않은 일반 백업본을 rman 으로 복구할 때 사용할 수 있도록
+   하는 명령어" 
+
+순서:
+#1.  users01.db 를 사용자 관리 hot 백업을 수행합니다.
+
+yys(SYS) > @datafile
+yys(SYS) > @tablespace
+
+yys(SYS) > alter  tablespace  users  begin  backup;
+yys(SYS) > select  * from v$backup;
+
+[yys:yys]$ cd
+[yys:yys]$ mkidr  hot_20240311
+[yys:yys]$ oradata
+[yys:yys]$ cp users01.dbf  /home/oracle/hot_20240311/users01.dbf
+[yys:yys]$ cd
+[yys:~]$ cd hot_20240311/
+[yys:hot_20240311]$ ls
+users01.dbf
+
+yys(SYS) >  alter  tablespace  users  end  backup; 
+
+yys(SYS) > select  * from  v$backup;
+
+#2.  1번에서 hot backup 받는 백업 파일을  알맨이 인식할 수 있도록 등록해줍니다.
+
+[yys:~]$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> catalog  datafilecopy  '/home/oracle/hot_20240311/users01.dbf' 
+
+#3.  알맨이 잘 인식하고 있는지 확인합니다.
+
+RMAN>  list  copy  of  datafile  4; 
+
+Key     File S Completion Time     Ckp SCN    Ckp Time
+------- ---- - ------------------- ---------- -------------------
+435     4    A 2024/03/11:10:24:11 2392239    2024/03/11:10:15:48
+          Name: /home/oracle/hot_20240311/users01.dbf
+
+문제1.  ts3000 이라는 테이블 스페이스를 5m 로 생성하시오 !
+
+
+문제2.  ts3000 테이블 스페이스를  사용자 관리 hot backup 을 받으세요 !
+
+
+문제3. 문제2번에서 hot backup 받는 파일을  catalog 명령어로 rman 이
+         인식할 수 있도록 하시오 !
+
+■  resync  catalog 명령어 실습 
+
+ target  db 의 controlfile 의 내용을 recovery catalog 에게 알려주며 동기화하는 명령어
+
+ * controlfile  이 관리하는 정보  ------------------------->  recovery  catalog
+                                                동기화 
+  1.  db 의 물리적 구조 정보
+  2.  rman 백업 정보 
+
+#1.   알맨으로 접속합니다. 
+
+[yys:~]$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+#2. target db의  controlfile 과  recovery catalog 를 서로 동기화 합니다.
+
+RMAN>  resync  catalog;
+
+이런 동기화가 필요한 때 ?       target db 의  구조가 변경되었을때
+ 
+                                        예: tablespace 생성, tablespace 삭제, datafile 추가 
+
+원래 동기화는 자동으로 일어나는데 위의 명령어는 수동으로 등록준것입니다.
+
+문제1.  target  db 쪽에  ts501 라는 테이블 스페이스를 사이즈 5m 생성하고
+         알맨에서 report  schema 를 했을때 ts501  테이블 스페이스가 잘 보이는지
+         확인하시오 ! (자동 동기화가 되었으면 보입니다.)
+
+YYS>  create  tablespace  ts501
+           datafile  '/u01/app/oracle/oradata/yys/ts501.dbf' size 5m;
+
+$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> report  schema;  <--- target db 의 구조를 확인하는 명령어
+
+문제2.  별도의 터미널창을 열고 yys 의 alert 로그파일을 tail -f 로 모니터링하시오 !
+
+답:  $ sh dba.sh
+
+문제3.  ts501 테이블 스페이스를 drop 하면서 alert log file을 모니터링하시오 !
+
+yys(SYS) > drop tablespace ts501 including contents and datafiles;
+
+alert log file 에 resync catalog  명령어가 자동으로 수행된게 나오지는 않았습니다. 
+
+drop tablespace 를 했으면 알맨으로 와서 resync catalog 명령어를 수행줍니다. 
+
+RMAN> resync catalog;
+
+starting full resync of recovery catalog
+full resync complete
+
+RMAN> report schema;
+
+■ change 명령어 
+
+  "recovery  catalog 에 등록된 백업 정보를 지울 때 사용하는 명령어 "
+
+실습:
+#1.  datafile  4번에 대한 알맨 백업 정보를 확인합니다. 
+
+[yys:~]$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> list  copy  of  datafile  4;
+
+ Name: /home/oracle/hot_20240311/users01.dbf
+
+#2.  그 백업 정보를 알맨에서 지웁니다.
+
+RMAN> change  datafilecopy  '/home/oracle/hot_20240311/users01.dbf'  uncatalog;
+
+RMAN>  list  copy  of  datafile  4;
+
+문제1. 다시 /home/oracle/hot_20240311/users01.dbf 를 알맨이 인식할 수 있도록
+        등록하시오 !
+
+답: RMAN> catalog  datafilecopy  '/home/oracle/hot_20240311/users01.dbf';
+
+RMAN> list copy of datafile 4;
+
+■ crosscheck 명령어 실습 
+
+  원본 파일과 알맨 백업 파일을 서로 비교해서 백업이 없는 파일이 있는지
+  확인하는 중요한 명령어
+
+실습:
+
+#1. 알맨으로 접속합니다. 
+
+[yys:~]$ rman  target  sys/oracle_4U@yys  catalog  rc_user/rc_user@orcl
+
+#2. 원본 파일과 백업본과의 차이가 있는지 확인합니다.
+
+RMAN> report  need  backup; 
+
+여기서 뭐가 하나라도 보이면 백업이 필요한 파일입니다. 
+
+RMAN> backup  database; 
+
+RMAN> report  need  backup; 
+
+# 3. 백업본에 문제가 있는지 확인합니다. 
+
+RMAN> crosscheck  backupset; 
+
+여기서 전부 AVAILABLE 라고 나와야 유효한 백업본이라는 것입니다.
+만약에 알맨이 알고 있는 백업정보와 실제 물리적 정보와 차이가 발생하면
+expired 라고 뜹니다. 
+
+문제1.  알맨 모르게  os 에서 backupset 중에 하나를 삭제하시오 !
+
+RMAN> list backupset of datafile 4;
+
+ /u01/app/oracle/flash_recovery_area/YYS/backupset/2024_03_11/o1_mf_nnndf_TAG20240311T111941_lywtkxy6_.bkp
+
+위의 파일을 os 에서 rm 으로 지워버립니다.
+
+$ cd /u01/app/oracle/flash_recovery_area/YYS/backupset/2024_03_11
+
+$ rm o1_mf_nnndf_TAG20240311T111941_lywtkxy6_.bkp
+
+RMAN> crosscheck backupset;
+
+backup piece handle=/u01/app/oracle/flash_recovery_area/YYS/autobackup/2024_03_11/o1_mf_s_1163329882_lywt2cfx_.bkp RECID=47 STAMP=1163329883
+crosschecked backup piece: found to be 'EXPIRED'
+
+RMAN> delete  expired  backupset;
+
+※ 알맨으로 백업을 받을 때 백업 유형 2가지 ?
+
+  1. backupset
+  2. image copy
+
+지금까지의 실습들은 전부 backupset으로 백업받은 파일들에 대한 실습이었습니다. 
+
+■ list  명령어 실습 
+
+  백업본의 목록을 확인할 때 사용하는 명령어
+
+실습:
+#1. user tablespace 의 백업본이 있느냐?
+
+RMAN>  list  backup  of   tablespace  users; 
+
+#2. datafile  5 번의 백업본이 있느냐 ? 
+
+RMAN>  list  backup  of  datafile  5; 
+
+#3. 둘다 백업본이 없다고 나오면 백업을 받아야합니다
+
+RMAN> backup   tablespace  users;
+
+RMAN> backup   datafile  5;  
+
+문제1.  system 테이블 스페이스의 백업본이 있는지 조회하시오 !
+
+RMAN> list   backup  of  tablespace   system; 
+
+문제2. 없다고 나오면 백업 받으세요 ~
+
+RMAN> backup  database  include  current  controlfile; 
+
+■ report 명령어 실습
+
+  " list 명령어보다 더 지능적인 결과를 보여주는 명령어 입니다."
+
+#1.  현재 백업이 필요한 파일이 무엇인가 ?
+
+RMAN>  report  need  backup;
+
+#2.  공간 절약을 위해서 지워도 되는 백업 파일들을 보여달라 ! 
+
+RMAN> report  obsolete;
+                                                                  하나의 원본 파일에 대해서
+RMAN retention policy is set to redundancy 1   <-- 중복된 백업본을
+                                                                  1개의 백업본만 두겠다. 
+RMAN> delete obsolete; 
+
+
+#3.  target db 의 물리적 구조를 보여줘 !
+
+RMAN> report  schema;
+
+문제1. 중복된 백업본을 2개씩 유지하도록 설정하시오 !
+
+RMAN> configure  retention  policy  to  redundancy  2; 
+
+RMAN> show all;
+
+문제2.  users 테이블 스페이스를 3번 백업하고  지워도 되는 백업 파일을 조회하시오 !
+
+RMAN> backup   tablespace  users;
+RMAN> report  obsolete;
+
+RMAN> backup   tablespace  users;
+RMAN> report  obsolete;
+
+RMAN> backup   tablespace  users;
+RMAN> report  obsolete;

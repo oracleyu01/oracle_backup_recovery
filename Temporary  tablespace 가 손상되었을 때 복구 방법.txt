@@ -1,0 +1,109 @@
+
+▣ 예제43. Temporary  tablespace 가 손상되었을 때 복구 방법
+
+ temporary  tablespace 가 손상되게 되면  db 내렸다 올리면 다시 자동으로
+ 생성됩니다.  그런데 만약에 db 를 안내리게 되면 그냥 새로운 temp data file을
+ 추가하면 됩니다.
+
+ temp 테이블 스페이스가 없으면 order by 문장이 다 실패하고 with 절도 수행
+ 안되고 인덱스도 안만들어집니다. 
+
+■ 실습1.  temp01.dbf 가 손상되었고 db가 내려갔을 때
+
+#1. temp 테이블 스페이스의 temp 파일을 조회합니다.
+
+yys(SYS) > select file_name  from dba_temp_files;
+
+/u01/app/oracle/oradata/yys/temp01.dbf
+
+#2. shutdown abort 
+#3. os 에서 temp01.dbf 를 삭제를 합니다.
+#4. 별도의 터미널 창을 열어서 alert log file 을 모니터링합니다. 
+#5. startup
+
+Re-creating tempfile /u01/app/oracle/oradata/yys/temp01.dbf
+
+alert  log file 을 보면 스스로 오라클이 temp01.dbf 를 다시 생성했습니다.
+
+#6. 잘 조회되는지 확인하시오 !
+
+yys(SYS) > select file_name from dba_temp_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/yys/temp01.dbf
+
+[yys:yys]$ oradata
+[yys:yys]$ ls -l temp01.dbf
+-rw-r----- 1 oracle dba 30416896  3월 11 15:20 temp01.dbf
+[yys:yys]$
+
+■ 실습2. db 를 안내리고 temp01.dbf 를 복구하기
+
+순서:
+#1.  os 에서 바로 temp01.dbf 를 삭제합니다. 
+#2.  temp 가 없으므로 정렬작업이나 인덱스 생성작업이 실패하는지 확인하시오 !
+#3.  (복구)  temp2 라는 temporary 테이블 스페이스를 생성합니다.
+#4.  (복구)  temp2 를 defalut  temporary tablespace 로 지정합니다.
+#5.  (복구) 기존 temp 테이블 스페이스를 drop 합니다. 
+#6. 실패했던 인덱스 생성 스크립트가 잘 수행되는지 확인합니다.
+
+
+구현:
+#1.  os 에서 바로 temp01.dbf 를 삭제합니다. 
+
+$ oradata
+$ rm  temp01.dbf
+
+#2.  temp 가 없으므로 정렬작업이나 인덱스 생성작업이 실패하는지 확인하시오 !
+
+scott>  create   table  emp2
+           as
+            select  * from emp;
+
+scott> insert into  emp2  
+         select * from emp2;  <---  16번 수행
+
+scott> alter session set workarea_size_policy=manual;
+
+scott>  alter session set sort_area_size =1;
+
+scott> create  index  emp2_sal  on  emp2(sal);
+
+ORA-01110: data file 1001: '/u01/app/oracle/oradata/yys/temp01.dbf'
+
+#3.  (복구)  temp2 라는 temporary 테이블 스페이스를 생성합니다.
+
+yys(SYS) > create  temporary  tablespace  temp2
+                 tempfile  '/u01/app/oracle/oradata/yys/temp02.dbf'  size 50m;
+
+#4.  (복구)  temp2 를 defalut  temporary tablespace 로 지정합니다.
+
+yys(SYS) > alter  database default  temporary  tablespace  temp2;
+
+yys(SYS) >@dbp	
+
+#5.  (복구) 기존 temp 테이블 스페이스를 drop 합니다.
+
+yys(SYS) > drop   tablespace  temp  including  contents and   datafiles;
+ 
+#6. 실패했던 인덱스 생성 스크립트가 잘 수행되는지 확인합니다.
+
+scott> alter session set workarea_size_policy=manual;
+scott> alter session set sort_area_size=1;
+
+scott> create  index  emp2_sal  on  emp2(sal);
+
+문제1.  그럼 다시 temp 라는 이름으로 temporary  tablespace 를 생성하고
+           temp 를 defalut  temporary  tablespace 로 지정하시오 !
+
+답:
+create  temporary  tablespace  temp
+   tempfile  '/u01/app/oracle/oradata/yys/temp01.dbf'  size  100m;
+
+alter   database  default  temporary   tablespace  temp;
+
+@/home/oracle/dbp
+
+drop   tablespace  temp2  including  contents  and  datafiles;
+

@@ -1,0 +1,108 @@
+
+▣ 예제.  index  tablespace 가 손상되었을 때 복구 방법
+
+   현업에서는  테이블이 있는 테이블 스페이스와 인덱스가 있는 테이블 스페이스를
+   엄격하게 분리해서 관리를 합니다.
+
+설명그림: https://cafe.daum.net/oracleoracle/SoDd/292
+
+ 테이블과 인덱스가 같은 테이블 스페이스에 존재하면 해당 테이블 스페이스의
+ data file에 부하가 걸리게 됩니다.
+
+ 그래서 테이블과 인덱스를 별개의 테이블스페이스에 분리해서 저장해야합니다.
+
+■ 실습:   인덱스 테이블 스페이스의 경우 복구가 안되면 그냥 인덱스를 다시 생성
+              하면 되는 실습 (복구를 못한다고 가정하고 하는 실습입니다.)
+
+#1.  ts702 라는 이름으로 테이블 스페이스를 생성합니다.
+#2.  index702 라는 이름으로 테이블 스페이스를 생성합니다.
+#3.  emp702 라는 테이블을 ts702 테이블 스페이스에 생성합니다.
+#4.  emp702_sal 인덱스를 index702 테이블 스페이스에 생성합니다. 
+#5.  RMAN 으로 위의 2개의 테이블 스페이스를 백업합니다.
+#6.  os 에서 index702.dbf 를 삭제합니다.
+#7.  메모리를 flush 시킵니다.
+#8.  emp702_sal 인덱스를 이용해서 데이터를 엑세스 합니다. <-- 실패
+#9.  index702 테이블 스페이스를 drop 을 합니다.
+#10.  다시 index702 테이블 스페이스를 생성합니다.
+#11.  emp702_sal 인덱스를 다시 생성하는데 빠르게 생성될 수 있게 합니다. 
+
+구현:
+
+#1.  ts702 라는 이름으로 테이블 스페이스를 생성합니다.
+
+create  tablespace  ts702
+  datafile  '/u01/app/oracle/oradata/yys/ts702.dbf'  size 10m;
+
+#2.  index702 라는 이름으로 테이블 스페이스를 생성합니다.
+
+create  tablespace  index702
+  datafile  '/u01/app/oracle/oradata/yys/index702.dbf'  size 10m;
+
+#3.  emp702 라는 테이블을 ts702 테이블 스페이스에 생성합니다.
+
+scott>  create  table  emp702
+          tablespace  ts702
+          as
+             select  * from  emp;
+
+#4.  emp702_sal 인덱스를 index702 테이블 스페이스에 생성합니다. 
+
+scott> create  index  emp702_sal
+           on  emp702(sal)
+           tablespace  index702;
+
+#5.  RMAN 으로 위의 2개의 테이블 스페이스를 백업합니다.
+
+$ rman  target sys//oracle_4U@yys  catalog rc_user/rc_user@orcl
+
+RMAN>  backup  tablespace   ts702; 
+RMAN>  backup  tablespace  index702;
+
+설명:  현업에서는 인덱스 테이블 스페이스는 저장공간을 절약하기 위해서
+         백업을 안하는 경우가 많습니다.  
+
+#6.  os 에서 index702.dbf 를 삭제합니다.
+
+[yys:yys]$ oradata
+[yys:yys]$ rm index702.dbf
+[yys:yys]$
+
+#7.  메모리를 flush 시킵니다.
+
+yys(SYS) > @flush
+
+#8.  emp702_sal 인덱스를 이용해서 데이터를 엑세스 합니다. <-- 실패
+
+scott> select /*+ index(emp702  emp702_sal)  */  ename, sal
+          from emp702
+          where sal = 3000;
+
+ORA-01110: data file 22: '/u01/app/oracle/oradata/yys/index702.dbf'
+
+#9.  index702 테이블 스페이스를 drop 을 합니다.
+
+yys(SYS) > alter tablespace index702 offline immediate;
+
+설명:  offline immeidate 를 쓰게 되면 checkpoint 없이 offline 시키는것입니다.
+
+yys(SYS) > drop  tablespace  index702 including contents and datafiles;
+
+#10.  다시 index702 테이블 스페이스를 생성합니다.
+
+yys(SYS) > create  tablespace  index702  
+              datafile  '/u01/app/oracle/oradata/yys/index702.dbf'  size  10m;
+
+#11.  emp702_sal 인덱스를 다시 생성하는데 빠르게 생성될 수 있게 합니다. 
+
+scott>  create   index   emp702_sal
+          on   emp702(sal)
+          tablespace  index702
+          nologging
+          parallel   12; 
+
+scott>  alter   index  emp702_sal   parallel  1;  
+
+scott>  select  index_name, degree  
+          from  user_indexes 
+          where  index_name='EMP702_SAL';
+
