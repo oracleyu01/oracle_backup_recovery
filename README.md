@@ -53,7 +53,12 @@
 | 5.9 | RMAN 을 사용하지 않고 백업본이 없을 때 복구 방법      | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%98%EC%A7%80%20%EC%95%8A%EA%B3%A0%20%EB%B0%B1%EC%97%85%EB%B3%B8%EC%9D%B4%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
 | 5.10 |  RMAN 을 사용해서 백업본이 없을 때 복구 방법   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/RMAN%20%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%96%88%EC%9D%84%20%EB%95%8C%20%EB%B0%B1%EC%97%85%EB%B3%B8%EC%9D%B4%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
 |    | **6. recovery catalog 를 사용하여 백업과 복구하기** |  |
-| 5.11 |  recovery catalog 구성하기   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Recovery%20catalog%20%20%EA%B5%AC%EC%84%B1%20%EB%B0%A9%EB%B2%95.txt) |
-| 5.12 | recovery catalog 를 별도의 database 에 구성하기   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/recovery%20catalog%20%EB%A5%BC%20%EB%B3%84%EB%8F%84%EC%9D%98%20database%20%EC%97%90%20%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0.txt) |
-| 5.13 |    | [관련 코드]() |
-| 5.14 |   | [관련 코드]() |
+| 6.11 |  recovery catalog 구성하기   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Recovery%20catalog%20%20%EA%B5%AC%EC%84%B1%20%EB%B0%A9%EB%B2%95.txt) |
+| 6.12 | recovery catalog 를 별도의 database 에 구성하기   | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/recovery%20catalog%20%EB%A5%BC%20%EB%B3%84%EB%8F%84%EC%9D%98%20database%20%EC%97%90%20%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0.txt) |
+| 6.13 | Recovery catalog 를 사용했을때 사용할 수 있는 알맨 명령어    | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Recovery%20catalog%20%EB%A5%BC%20%EC%82%AC%EC%9A%A9%ED%96%88%EC%9D%84%EB%95%8C%20%EC%82%AC%EC%9A%A9%ED%95%A0%20%EC%88%98%20%EC%9E%88%EB%8A%94%20%EC%95%8C%EB%A7%A8%20%EB%AA%85%EB%A0%B9%EC%96%B4.txt) |
+| 6.14 | Recovery catalog 를 사용했을 때  불완전 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Recovery%20catalog%20%EB%A5%BC%20%EC%82%AC%EC%9A%A9%ED%96%88%EC%9D%84%20%EB%95%8C%20%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 6.15 | 복구 관리자 사용하기  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B3%B5%EA%B5%AC%20%EA%B4%80%EB%A6%AC%EC%9E%90%20%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0.txt) |
+|    | **7. 기타 오라클 중요 파일들 복구 방법** |  |
+| 7.1 | Temporary  tablespace 가 손상되었을 때 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Temporary%20%20tablespace%20%EA%B0%80%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 7.2 | index  tablespace 가 손상되었을 때 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/index%20%20tablespace%20%EA%B0%80%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+
