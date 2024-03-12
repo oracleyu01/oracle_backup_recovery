@@ -61,4 +61,8 @@
 |    | **7. 기타 오라클 중요 파일들 복구 방법** |  |
 | 7.1 | Temporary  tablespace 가 손상되었을 때 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/Temporary%20%20tablespace%20%EA%B0%80%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
 | 7.2 | index  tablespace 가 손상되었을 때 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/index%20%20tablespace%20%EA%B0%80%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 7.3 | password file 손상시 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/password%20%20file%20%EC%9D%B4%20%EC%86%90%EC%83%81%EB%90%98%EC%97%88%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 7.3 | block 손상시 rman 을 사용한 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B8%94%EB%9F%AD%20%EC%86%90%EC%83%81%EC%8B%9C%20RMAN%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%9C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 7.3 | block 손상시 rman 을 사용하지 않은 복구 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B8%94%EB%9F%AD%20%EC%86%90%EC%83%81%EC%8B%9C%20RMAN%EC%9D%84%20%EC%82%AC%EC%9A%A9%ED%95%98%EC%A7%80%20%EC%95%8A%EC%9D%80%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt) |
+| 7.3 | logminer 를 이용하여 복구 시점 알아내는 방법  | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%A1%9C%EA%B7%B8%20%EB%A7%88%EC%9D%B4%EB%84%88%20%EC%82%AC%EC%9A%A9%ED%95%98%EC%97%AC%20%EB%B3%B5%EA%B5%AC%20%EC%8B%9C%EC%A0%90%20%EC%95%8C%EC%95%84%EB%82%B4%EB%8A%94%20%EB%B0%A9%EB%B2%95.txt) |
 
