@@ -1,0 +1,107 @@
+
+▣ 예제. 블럭 손상시 RMAN을 사용하지 않은 복구 방법
+
+■ 실습
+순서: 
+#1. 알맨으로 ts600 테이블 스페이스를 백업합니다.
+#2. 사용자 관리 방법으로 ts600 테이블 스페이스를 hot 백업합니다. 
+#3. 로그 스위치를 3번 일으킵니다.
+#4. 체크 포인트를 일으킵니다.
+#5. 테이블을 생성합니다.
+#6. 생성된 테이블의 블럭을 손상시킵니다.
+#7. 해당 테이블의 데이터를 select 를 합니다.  <-- 에러 발생
+#8. 손상된 블럭을 확인합니다.
+#9. (복구) 해당 data file 을 offline 시킵니다.
+#10.(복구) os 에서 백업받은 백업본을 복원합니다.
+#11.(복구) 복원한 파일에 아카이브 로그 파일을 적용해서 복구합니다.
+#12.(복구) 해당 data file을 online 시킵니다.
+#13. 테이블을 select  를 합니다. 
+
+구현: 
+#1. 알맨으로 ts600 테이블 스페이스를 백업합니다.
+
+$ rman  target  sys/oracle_1234@yys  catalog  rc_user/rc_user@orcl
+
+RMAN> backup  tablespace  ts600;
+
+#2. 사용자 관리 방법으로 ts600 테이블 스페이스를 hot 백업합니다. 
+
+SYS> alter  tablespace  ts600  begin  backup;
+SYS> select * from v$backup;
+$ mkdir  hot_20240312
+$ cp  /u01/app/oracle/oradata/yys/ts600.dbf  /home/oracle/hot_20240312/ts600.dbf
+SYS> alter  tablespace  ts600  end  backup;
+SYS> select * from v$backup;
+
+#3. 로그 스위치를 3번 일으킵니다.
+
+sys> @logsw
+sys> @logsw
+sys> @logsw
+
+#4. 체크 포인트를 일으킵니다.
+
+sys> alter  system  checkpoint;
+
+#5. 테이블을 생성합니다.
+
+scott> create  table  emp600b
+         tablespace   ts600
+         as
+           select * from  emp;
+
+#6. 생성된 테이블의 블럭을 손상시킵니다.
+
+select file_id, block_id
+  from  dba_extents
+  where segment_name='EMP600B';
+
+ FILE_ID   BLOCK_ID
+---------- ----------
+        23        136
+
+
+$ ./lab_07_02.sh  /u01/app/oracle/oradata/yys/ts600.dbf  136  8192
+
+
+#7. 해당 테이블의 데이터를 select 를 합니다.  <-- 에러 발생
+sys> @flush
+
+yys(SCOTT) > select * from emp600b;
+
+ORA-01578: ORACLE data block corrupted (file # 23, block # 139)
+ORA-01110: data file 23: '/u01/app/oracle/oradata/yys/ts600.dbf'
+
+#8. 손상된 블럭을 확인합니다.
+
+$ dbv  file=/u01/app/oracle/oradata/yys/ts600.dbf  blocksize=8192
+
+파일번호: 23
+블럭번호:  139
+
+#9. (복구) 해당 data file 을 offline 시킵니다.
+
+sys> alter  tablespace  ts600  offline; 
+
+#10.(복구) os 에서 백업받은 백업본을 복원합니다.
+
+$ oradata
+$ rm ts600.dbf
+$ cp  /home/oracle/hot_20240312/ts600.dbf  .
+$ ls -l ts600.dbf
+
+
+#11.(복구) 복원한 파일에 아카이브 로그 파일을 적용해서 복구합니다.
+
+yys(SYS) > recover datafile 23;
+
+#12.(복구) 해당 data file을 online 시킵니다.
+
+yys(SYS) > alter  tablespace  ts600  online;
+
+#13. 테이블을 select  를 합니다. 
+
+yys(scott) >  select * from emp600b;
+
+점심시간 문제: 위의 emp600b 가 잘 조회되는지 확인하고 라인 검사 받으세요 !
+

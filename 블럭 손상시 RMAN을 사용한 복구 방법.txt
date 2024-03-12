@@ -1,0 +1,128 @@
+
+▣ 예제46.  블럭 손상시 복구 방법
+
+ 사전 설명:     database 논리적 구조  --------------  물리적 구조 
+ 
+                          database
+                              ↓
+                         tablespace  --------------------->   datafile 
+                             ↓                                           ↓
+                          segment                                   os block 
+                             ↓
+                          extent 
+                             ↓
+                           block 
+
+ 현업에서 정말 자주 벌어지는 장애 유형중에 하나가 block 손상입니다
+  block 이 손상되는 원인은 여러가지가 있는데  os 의 버그(bug) 일 가능성도
+  높고  oracle 의 버그(bug) 일 가능성도 큽니다.  과도한 DML 작업도 원인입니다 
+
+■ 실습
+
+순서:
+#1. 테이블 스페이스를 생성합니다.
+#2. 1번에서 만든 테이블 스페이스에 테이블을 생성합니다.
+#3. RMAN 으로 1번에서 만든 테이블 스페이스를 HOT BACKUP 합니다.
+#4. OS에서 1번에서 생성한 테이블 스페이스의 블럭을 손상 시킵니다.
+#5. 버퍼캐쉬와 공유풀의 내용을 Flush 시킵니다.
+#6. 2번에서 만든 테이블을 select 를 해봅니다. <--- 에러발생 
+#7. 다른 테이블을 조회해봅니다. 
+#8. 손상된 블럭이 정확하게 어떤건지 확인합니다.
+#9. RMAN으로 접속해서 복구를 합니다.
+#10. 2번에서 만든 테이블을 select 를 해봅니다. 
+ 
+
+구현:
+#1. 테이블 스페이스를 생성합니다.
+
+create  tablespace  ts600
+   datafile  '/u01/app/oracle/oradata/yys/ts600.dbf'  size 10m;
+
+#2. 1번에서 만든 테이블 스페이스에 테이블을 생성합니다.
+
+connect  scott/tiger
+
+create  table  emp600
+ tablespace  ts600
+as
+ select * from  emp;
+
+#3. RMAN 으로 1번에서 만든 테이블 스페이스를 HOT BACKUP 합니다.
+
+$ rman  target sys/oracle_1234@yys  catalog rc_user/rc_user@orcl
+
+RMAN> backup  tablespace  ts600;
+
+#4. OS에서 1번에서 생성한 테이블 스페이스의 블럭을 손상 시킵니다.
+
+다운로드 주소: https://cafe.daum.net/oracleoracle/SoDd/312
+
+lab_07_02.sh 쉘을 /home/oracle 밑으로 모바텀을 이용해서 올립니다.
+
+[yys:~]$ chmod 777 lab_07_02.sh
+
+[yys:~]$ ls -l lab_07_02.sh
+-rwxrwxrwx 1 oracle oinstall 697  3월 12 11:08 lab_07_02.sh
+
+sys 유져로 접속해서  손상시킬 블럭의 data file 번호와 블럭번호를 확인합니다.
+
+sys> select  file_id, block_id
+         from  dba_extents
+         where  segment_name='EMP600';
+
+  FILE_ID   BLOCK_ID
+---------- ----------
+        23        128      <-----------  이 번호를 잘 기억하세요 ~
+
+[yys:~]$ ./lab_07_02.sh /u01/app/oracle/oradata/yys/ts600.dbf 128 8192
+
+#5. 버퍼캐쉬와 공유풀의 내용을 Flush 시킵니다.
+
+SYS> @flush
+
+#6. 2번에서 만든 테이블을 select 를 해봅니다. <--- 에러발생 
+
+scott> select * from  emp600;
+
+ERROR at line 1:
+ORA-01578: ORACLE data block corrupted (file # 23, block # 130)
+ORA-01110: data file 23: '/u01/app/oracle/oradata/yys/ts600.dbf'
+
+
+#7. 다른 테이블을 조회해봅니다. 
+
+emp600 만 조회안되고 다른 테이블들은 조회 됩니다. 
+
+yys(SCOTT) > select * from dept;
+
+    DEPTNO DNAME          LOC
+---------- -------------- -------------
+        10 ACCOUNTING     NEW YORK
+        20 RESEARCH          DALLAS
+        30 SALES               CHICAGO
+        40 OPERATIONS     BOSTON
+
+
+#8. 손상된 블럭이 정확하게 어떤건지 확인합니다.
+
+$ dbv  file=/u01/app/oracle/oradata/yys/ts600.dbf  blocksize=8192
+
+위의 결과 레포트에서 확인한 4개의 블럭번호를 기록합니다.
+파일번호: 23
+블럭번호:  128, 129, 130, 131
+
+#9. RMAN으로 접속해서 복구를 합니다.
+
+[yys:~]$ rman target sys/oracle_1234@yys catalog rc_user/rc_user@orcl
+
+RMAN> blockrecover  datafile  23 block 128,129,130,131; 
+
+#10. 2번에서 만든 테이블을 select 를 해봅니다. 
+ 
+yys(SCOTT) > select * from emp600;
+
+정리:    블럭이 손상이 되게 되면 db가 down 되는 것은 아닌데 해당 테이블이
+          조회가 안됩니다. 이럴때는 dbv 로 손상된 블럭이 뭔지 확인을 하고
+          rman 에서 blockrecover 를 이용해서 복구하면 끝납니다.
+
+이력서의 보유기술 :  블럭 손상시 RMAN 으로 복구하는 기술

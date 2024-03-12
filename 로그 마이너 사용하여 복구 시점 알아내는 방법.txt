@@ -1,0 +1,174 @@
+
+▣ 예제. 로그 마이너 사용하여 복구 시점 알아내는 방법
+
+ 불완전 복구를 할 때 불완전 복구를 할 시점을 알아내야합니다.
+ 특히 중요한 테이블이나 중요한 유져가 drop 된 시간을 알아내야 합니다.
+ 그래서 drop 되기 전 시점으로 불완전 복구를 해야합니다. 
+
+ 이 시간 정보를 alert log file 에는 나오지 않습니다. 
+ alert log file 에는 테이블 스페이스 생성 되거나 drop 된 시간은 나오지만
+ 테이블이나 유져가 drop 된 시간은 나오지 않습니다.
+ 이럴 때 로그 마이터(logminer) 를 이용해야합니다.
+
+■ Logminer 사용법 실습
+
+   "log( redo log file, archive log file) 를 mining 하는 툴"
+
+순서:
+#1. logminer 를 사용하기 위한 환경 구성
+#2. /home/oracle 밑에 miner 라는 디렉토리를 생성하고 이 디렉토리를
+     log 파일을 분석할 저장소로 지정합니다.
+#3. 로그 마이너로 분석할 디렉토리에 디렉토리 파일을 생성합니다. 
+#4. 테이블을 drop 을 하고 checkpoint 를 일으킵니다.
+#5. current redo logfile 이 무엇인지 알아냅니다. 
+#6. 분석할 redo log file 을 추가하는 작업을 수행합니다. 
+#7. 분석을 시도합니다. 
+#8. 분석된 결과를 확인합니다.
+
+
+구현:
+#1. logminer 를 사용하기 위한 환경 구성
+
+SQL> show  parameter  utl_file_dir 
+
+#2. /home/oracle 밑에 miner 라는 디렉토리를 생성하고 이 디렉토리를
+     log 파일을 분석할 저장소로 지정합니다.
+
+$ cd
+$ mkdir  miner
+SQL> alter  system set utl_file_dir='/home/oracle/miner'  scope=spfile;
+SQL> shutdown immediate
+SQL> startup
+SQL> show parameter utl_file_dir 
+
+#3. 로그 마이너로 분석할 디렉토리에 디렉토리 파일을 생성합니다. 
+
+SQL> execute  dbms_logmnr_d.build('dir_file','/home/oracle/miner');
+SQL> exit;
+$ cd  /home/oracle/miner
+$ ls 
+
+ dir_file  <-----------  이 file 이 있는지 확인합니다. 
+
+#4. 테이블을 drop 을 하고 checkpoint 를 일으킵니다.
+
+SCOTT> drop table dept cascade constraints;
+
+sys> alter  system  checkpoint;
+
+왜 checkpoint 를 일으켰냐면?  checkpoint 이벤트는 메모리의 내용을 전부
+                                         datafile 과 redo logfile 에 내려쓰는 이벤트
+                                
+그림설명: https://cafe.daum.net/oracleoracle/SoDd/314
+
+#5. current redo logfile 이 무엇인지 알아냅니다. 
+
+SQL> @log_status
+
+GROUP# STATUS            SEQUENCE#    MEMBERS ARC
+---------- ---------------- ---------- ---------- ---
+         1 INACTIVE                 16          2 YES
+         2 CURRENT                 17         2 NO  <---  2번이 current 입니다.
+         3 INACTIVE                 15          2 YES
+
+SQL> @logfile 
+
+#6. 분석할 redo log file 을 추가하는 작업을 수행합니다. 
+
+SQL> exec dbms_logmnr.add_logfile('/u01/app/oracle/oradata/yys/redo02.log', 1);
+
+※ 숫자의 의미
+
+ 1 ------> new (새로 추가)
+ 3 ------> add (기존에 추가)
+ 2 ------> remove (삭제)
+
+#7. 분석을 시도합니다. 
+
+SQL> exec dbms_logmnr.start_logmnr(dictfilename=>'/home/oracle/miner/dir_file');
+
+SQL> alter  session  set  nls_date_format='RRRR/MM/DD:HH24:MI:SS';
+
+#8. 분석된 결과를 확인합니다.
+
+SQL> select  timestamp, username, sql_redo
+          from  v$logmnr_contents
+          where  sql_redo  like  '%drop%';
+
+2024/03/12:14:02:46 UNKNOWN
+drop table dept cascade constraints AS "BIN$E2+Rpmpgu1vgYKjAPBMpaw==$0" ;
+
+문제1.  이번에는 scott 유져를 drop 을 하고 scott 유져가 drop 된 시간을 알아내시오 !
+
+#1. RMAN 으로 fullbackup 을 먼저 걸고 수행합니다. 
+
+$ rman  target  sys/oracle_1234@yys   catalog  rc_user/rc_user@orcl
+
+RMAN> backup  database;
+
+#2.  scott 유져를 drop 합니다. 
+
+SQL> drop  user  scott  cascade; 
+
+#3.  체크포인트를 수동으로 일으킵니다.
+
+SQL> alter  system  checkpoint; 
+
+#4.  drop 된 정보가 기록된 current  redo  log file 이 무엇인지 확인합니다.
+
+SQL> @log_status
+
+SQL> @logfile
+
+#5. 분석할 리두 로그 파일을 추가 합니다. 
+
+SQL> exec dbms_logmnr.add_logfile('/u01/app/oracle/oradata/yys/redo02.log', 2 );
+
+SQL> exec dbms_logmnr.add_logfile('/u01/app/oracle/oradata/yys/redo02.log', 1 );
+
+#6. 분석 시도 
+
+SQL> exec dbms_logmnr.start_logmnr(dictfilename=>'/home/oracle/miner/dir_file');
+
+#7. 분석된 결과를 확인합니다.
+
+SQL> alter  session set  nls_date_format='RRRR/MM/DD:HH24:MI:SS';
+
+SQL> select timestamp, username, sql_redo
+          from v$logmnr_contents
+          where sql_redo like '%drop user%';
+
+2024/03/12:15:57:44   UNKNOWN   drop user scott cascade;
+
+문제2.  scott 유져가 drop 되기 20초전으로 time base 불완전 복구를 하시오 !
+
+#1. shutdown immediate 
+
+#2. startrup  mount
+
+#3. rman으로 접속합니다. 
+
+$ rman  target  sys/oracle_1234@yys  catalog  rc_user/rc_user@orcl
+
+#4. rman 으로 불완전 복구를 합니다.
+
+RMAN> run { set until time='2024/03/12:15:47:44' ;
+                  restore  database;
+                  recover  database; 
+                 } 
+
+#5. alter  dabase open  resetlogs;
+
+#6. rman 으로 full backup 을 수행합니다. 
+
+문제3.  이번에는  다음과 같이 king2 이라는 유져를 생성하고  king 이라는 유져가 
+          생성된 시간을 알아내시오 !
+
+ create  user  king2
+  identified  by  tiger;
+
+  grant  resource, connect  to  king;
+
+문제4. (오늘의 마지막 문제)  king2 유져가 create 되기 전 시점으로 불완전 복구하시오!
+
+
