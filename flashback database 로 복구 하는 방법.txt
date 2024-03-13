@@ -2,23 +2,20 @@
 ▣ 예제. flashback database 로 복구 하는 방법
 
 * flashback 기술 총정리                       
-                                                         복구할 때 사용하는 data 
+                                                   복구할 때 사용하는 data 
  1. flashback    database                          flashback  database  log
- 2. flashback    drop                               휴지통
- 3. flashback    table                               undo  data
- 4. flashback    Query                              undo  data
- 5. flashback    version  Query                   undo  data
- 6. flashback    transaction  Query              undo  data
- 7. flashback    archive (total recall)            별도의 테이블 스페이스에 
-                                                          undo data 를 저장
+ 2. flashback    drop                              휴지통
+ 3. flashback    table                             undo  data
+ 4. flashback    Query                             undo  data
+ 5. flashback    version  Query                    undo  data
+ 6. flashback    transaction  Query                undo  data
+ 7. flashback    archive (total recall)            별도의 테이블 스페이스에 undo data 를 저장
 
  * recover 와  flashback 의  차이 ? 
 
-  1. recover (복구) :  과거에 백업받는 백업본을 가져와 아카이브 로그를 적용해서
-                           최대한 현재 시점으로 끌어오는것 
+  1. recover (복구) :  과거에 백업받는 백업본을 가져와 아카이브 로그를 적용해서 최대한 현재 시점으로 끌어오는것 
 
-  2. flashback( 되돌리는것) :  그동안 했던 작업을 반대로 수행하면서 과거로
-                                      가는것 ! 
+  2. flashback( 되돌리는것) :  그동안 했던 작업을 반대로 수행하면서 과거로 가는것 ! 
 
    flashback  database 가  time base 불완전 복구 보다 복구가 더 빠릅니다. 
 
