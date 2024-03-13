@@ -1,0 +1,108 @@
+
+▣ 예제50. 증분 백업 하는 방법
+
+  p7- 7 그림 참고
+
+ ■  백업의 용어
+
+ 1. whole  backup  :  전체 db 백업(datafile, controlfile, spfile(선택) )
+ 2. full backup  :  datafile 전체를 백업받는것
+
+ 3. partial backup :  datafile 1개만 백업받거나 몇개만 백업받는것.
+                          일부 테이블 스페이스만 백업 받거나하는것.
+
+ 4. incremental  backup :  마지막 백업 이후에 변경된 데이터만 백업 받는것
+
+* incremental level 백업의 종류 3가지 ?
+
+  1.  incremental  level  0 백업 -->  full  backup
+  2.  incremental  level  1 백업 -->  (full backup) 이후에 변경된것만 백업 
+
+           백업 속도가 빠릅니다. 왜냐하면 변경된것만 백업하기 때문입니다.
+
+  3.  incremental  level  1 cumulative 백업 -->
+
+         full backup 이후에 변경된것들을 누적해서 백업하는것.
+         cumualtive 백업이 있으면 나중에 복구할 때 속도를 높일 수 있다.
+
+    월           화            수                목                   금
+
+ 
+    월           화           수                 목                    금 
+
+
+    월          화  
+
+설명 그림:  https://cafe.daum.net/oracleoracle/SoDd/340
+
+설명:  월요일에 incremental  level 0 백업을 받으면 full backup 입니다.
+         시간이 오래걸립니다. 그래서 시간을 절약하면서 데이터를 지키기 위해
+        그 다음날 부터는 밤에 incremental  level 1 백업을 받습니다.
+        그리고 매일 매일 incremental  level 1 백업을 받다가  중간중간
+        incremental level  cumulative 백업을 받아서 복구시 빠르게 복구 할 수
+        있게 합니다. 
+
+■ 실습:
+
+#1. rman 으로 incremental  level 0 백업을 받습니다.
+
+$ cd
+$ mkdir hotbackup
+$ rman  targer   sys/oracle_1234  nocatalog
+RMAN> backup  incremental  level  0  database
+           format  '/home/oracle/hotbackup/%U' ;
+
+설명: %U 를 쓰면 오라클이 알아서 백업셋 이름을 생성해라 !
+
+#2. scott 으로 접속해서 emp 테이블의 데이터를 2배로 늘립니다.
+
+scott> alter table emp
+         drop constraint pk_emp cascade
+
+scott> insert  into  emp
+          select  * 
+            from emp;
+
+scott>  commit;
+
+#3. 로그 스위치를 일으키고 체크포인트를 일으킵니다.
+
+SQL> @logsw
+SQL>  alter  system  checkpoint ;
+
+#4. rman 으로 incremental  level 1 백업을 받습니다. 
+
+$ rman target sys/oracle_1234  nocatalog
+
+RMAN>  backup  incremental  level  1  database
+            format   '/home/oracle/hotbackup/%U'; 
+
+#5. scott 으로 접속해서 emp 테이블의 데이터를 2배로 늘립니다.
+
+scott> insert  into  emp
+          select  * 
+            from emp;
+
+scott>  commit;
+
+#6. 로그 스위치를 일으키고 체크포인트를 일으킵니다.
+
+SQL> @logsw
+SQL>  alter  system  checkpoint ;
+
+
+#7. rman 으로 incremental  level 1 백업을 받습니다.
+
+RMAN> backup  incremental  level  1  database
+            format  '/home/oracle/hotbackup/%U'; 
+
+#8. scott 으로 접속해서 emp 테이블의 데이터를 2배로 늘립니다.
+
+#9. 로그 스위치를 일으키고 체크포인트를 일으킵니다.
+
+#10. incremental  1 cumulative 백업을 받습니다. 
+
+RMAN> backup  incremental  level  1  cumulative  database
+            format  '/home/oracle/hotbackup/%U'; 
+
+

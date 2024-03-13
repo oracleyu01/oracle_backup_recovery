@@ -1,0 +1,66 @@
+
+▣ 예제. 증분 백업 이후에 장애 상황시 복구 방법
+
+  증분 백업 이후의 복구는 기존에 배웠던 복구 방법과 차이가 없습니다.
+  대신 RMAN 이 복구를 할때 최근에 증분백업 받은 백업을 이용해서 
+  복구를 진행한다는게 차이입니다. 
+
+■ 실습. 
+
+#1. 데이터를 저장할 테이블 스페이스를 하나 선택합니다.
+SQL> @tablespace
+
+TS07       AVAILABLE /u01/app/oracle/oradata/yys/ts07b.dbf
+
+#2. 그 테이블 스페이스에 테이블을 생성합니다.
+
+scott>  create  table  emp007
+          tablespace  ts07
+          as
+               select * from emp;
+
+#3. 해당 테이블이 속해있는 파일 번호와 블럭번호를 조회합니다.
+
+sys> select  file_id, block_id
+        from  dba_extents
+        where  segment_name='EMP007';
+
+ FILE_ID   BLOCK_ID
+---------- ----------
+        12        136
+
+#4. 해당 블럭을 손상 시킵니다.
+
+$ cd
+$ ./lab_07_02.sh  /u01/app/oracle/oradata/yys/ts07b.dbf  136 8192
+
+#5. 메모리를 flush 시킵니다.
+
+sys> @flush
+
+#6. emp007 을 select 해봅니다. 
+
+SCOTT> select * from emp007;
+
+ORA-01578: ORACLE data block corrupted (file # 12, block # 139)
+
+#7. RMAN 으로 접속해서 복구를 합니다.
+
+$ rman  target  sys/oracle nocatalog
+
+RMAN> list  backup  of  datafile  12;
+
+incremental level 로 백업받은 백업본이 존재합니다.
+
+$ dbv  file=/u01/app/oracle/oradata/yys/ts07b.dbf  blocksize=8192
+
+Corrupt block relative dba: 0x0300008b (file 12, block 139)
+
+RMAN> blockrecover  datafile  12  block 139;
+
+#8. scott 유져에서 emp007 을 select 해봅니다. 
+
+scott> select * from emp007;
+
+최근에 백업받았던 증분 백업본을 이용해서 rman이 알아서 복구해줬습니다.
+

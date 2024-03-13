@@ -1,0 +1,99 @@
+
+▣ 예제. flashback database 로 복구 하는 방법
+
+* flashback 기술 총정리                       
+                                                         복구할 때 사용하는 data 
+ 1. flashback    database                          flashback  database  log
+ 2. flashback    drop                               휴지통
+ 3. flashback    table                               undo  data
+ 4. flashback    Query                              undo  data
+ 5. flashback    version  Query                   undo  data
+ 6. flashback    transaction  Query              undo  data
+ 7. flashback    archive (total recall)            별도의 테이블 스페이스에 
+                                                          undo data 를 저장
+
+ * recover 와  flashback 의  차이 ? 
+
+  1. recover (복구) :  과거에 백업받는 백업본을 가져와 아카이브 로그를 적용해서
+                           최대한 현재 시점으로 끌어오는것 
+
+  2. flashback( 되돌리는것) :  그동안 했던 작업을 반대로 수행하면서 과거로
+                                      가는것 ! 
+
+   flashback  database 가  time base 불완전 복구 보다 복구가 더 빠릅니다. 
+
+■ 실습
+순서
+#1. flashback  database 기능이 활성화 되어져있는지 확인합니다.
+#2. shutdown immediate 를 하고 mount 로 올립니다.
+#3. flashback  database 기능을 활성화 시킵니다.
+#4. db 를 open 시키고 flashback database 기능이 활성화 되었는지 확인합니다.
+#5. 현재 시간을 확인합니다.
+#6. 현재 scn 번호를 확인합니다.( system change number의 약자)
+#7. scott 유져를 drop 합니다.
+#8. (복구) shutdown immediate 로 db 를 내립니다.
+#9. (복구) startup mount 를 합니다.
+#10. (복구)  scott 유져 drop 되기 전으로 flashback database 를 수행합니다.
+#11. (복구) resetlogs 로 db를 올립니다. 
+#12. rman 으로 전체 full backup 을 수행합니다.
+
+구현:
+#1. flashback  database 기능이 활성화 되어져있는지 확인합니다.
+
+sys> select  flashback_on  from  v$database; 
+
+#2. shutdown immediate 를 하고 mount 로 올립니다.
+
+sys> shutdown  immediate
+sys> startup  mount
+
+#3. flashback  database 기능을 활성화 시킵니다.
+
+sys> alter  database  flashback  on;
+
+#4. db 를 open 시키고 flashback database 기능이 활성화 되었는지 확인합니다.
+
+sys> alter  database  open;
+sys> select flashback_on  from  v$database;
+
+#5. 현재 시간을 확인합니다.
+
+sys> select  sysdate from dual;
+
+2024/03/13:16:13:05
+
+#6. 현재 scn 번호를 확인합니다.( system change number의 약자)
+
+select  current_scn  from  v$database;
+
+CURRENT_SCN
+---------------
+    2630668
+
+#7. scott 유져를 drop 합니다.
+
+sys>  drop  user  scott  cascade;
+
+#8. (복구) shutdown immediate 로 db 를 내립니다.
+
+sys>  shutdown  immediate
+
+#9. (복구) startup mount 를 합니다.
+
+sys>  startup  mount
+
+#10. (복구)  scott 유져 drop 되기 전으로 flashback database 를 수행합니다.
+
+sys> flashback  database  to  timestamp
+       to_timestamp('2024/03/13:16:13:05','RRRR/MM/DD:HH24:MI:SS');
+
+또는
+
+sys> flashback  database  to  scn  2630668;
+
+
+#11. (복구) resetlogs 로 db를 올립니다. 
+
+#12. scott 으로 접속이 되는지 확인합니다.
+
+#13. rman 으로 전체 full backup 을 수행합니다.

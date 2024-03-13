@@ -1,0 +1,19 @@
+
+▣ 예제. 알맨으로 백업할 때 압축하여 백업하기
+
+  알맨으로 백업할 때의 장점이 백업본을 압축을 할 수 있습니다.
+  3배 정도 저장공간이 절약됩니다.
+
+■ 실습
+
+#1. 압축을 하지 않고 백업을 합니다.
+
+RMAN> backup  datafile   1
+           format  '/home/oracle/hotbackup/datafile1_%U';
+
+#2. 압축을 하고 백업을 합니다.
+
+RMAN> backup as compressed backupset datafile  1
+           format  '/home/oracle/hotbackup/datafile1_compress_%U';
+
+#3. 압축한 파일과 압축하지 않은 백업 파일의 크기를 서로 비교합니다. 

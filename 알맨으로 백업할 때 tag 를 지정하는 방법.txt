@@ -1,0 +1,37 @@
+▣ 예제53. 알맨으로 백업할 때 tag 를 지정하는 방법
+
+ tag 는 사람이 알아볼 수 있는 쉬운 용어로 백업본의 이름을 지정하는것입니다.
+
+ RMAN>  list  backup;
+
+ 뭐가 여러개 나오긴 했는데 이 백업본이 무슨 백업본이 잘 모르는 상황입니다.
+ 월간 단위 백업본인지 주간 단위 백업본인지 일단위 백업본인지가 
+ 확실치가 않습니다. tag 를 통해서 이름을 부여할 수 있습니다.
+
+ 질문: RMAN으로 백업할 때 어떻게 백업하셨어요 ?
+
+ 답변 :  tag 를 이용해서 월간단위, 주간단위 이름을 붙여서 증분백업을 했습니다.
+
+■ 실습
+
+#1.  테그 이름을 붙여서 전체 database 백업을 받습니다.
+
+RMAN> backup  tag  'month_full_backup'  database; 
+
+#2.  테그를 이용해서 백업본을 확인합니다.
+
+RMAN> list  backup  tag  'month_full_backup';
+
+#3. 증분 백업으로 full backup 을 받는데  level_0_backup 이라는 테그 이름을
+     붙여서 받으시오 !
+
+RMAN> backup  incremental  level  0  database  tag  'level_0_backup';
+
+문제1.  이번에는 incremental  level 1 백업을 받는데 테그 이름을 
+          wed_incre_1_level 이라는 이름으로 테그를 붙여서 백업을 받으시오 !
+
+RMAN> backup  incremental  level  1  database  tag 'wed_incre_1_level';
+
+문제2.  wed_incre_1_level 이라는 테그 이름을 가지고 백업본이 존재하는지
+          list 명령어로 확인해보시오 !
+
