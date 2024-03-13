@@ -1,5 +1,5 @@
 
-▣ 예제49. backup set 과 image copy 의 차이점
+▣ 예제49. image copy 본으로 백업 받고 복구하는 방법
 
  RMAN으로 백업을 받을 때 백업 유형 2가지 ?
 
