@@ -72,3 +72,4 @@
 | 7.8 | 알맨으로 백업할 때 tag 를 지정하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%8C%EB%A7%A8%EC%9C%BC%EB%A1%9C%20%EB%B0%B1%EC%97%85%ED%95%A0%20%EB%95%8C%20tag%20%EB%A5%BC%20%EC%A7%80%EC%A0%95%ED%95%98%EB%8A%94%20%EB%B0%A9%EB%B2%95.txt)
 | 7.9 | 알맨으로 백업할 때 압축하여 백업하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%8C%EB%A7%A8%EC%9C%BC%EB%A1%9C%20%EB%B0%B1%EC%97%85%ED%95%A0%20%EB%95%8C%20%EC%95%95%EC%B6%95%ED%95%98%EC%97%AC%20%EB%B0%B1%EC%97%85%ED%95%98%EA%B8%B0.txt)
 | 7.10 | flashback database 로 복구 하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/flashback%20database%20%EB%A1%9C%20%EB%B3%B5%EA%B5%AC%20%ED%95%98%EB%8A%94%20%EB%B0%A9%EB%B2%95.txt)
+| 7.11 | flashback archive total recall 설정하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/flashback%20%20archive%20(total%20%20recall).txt)
