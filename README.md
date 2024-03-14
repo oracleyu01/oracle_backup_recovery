@@ -74,4 +74,4 @@
 | 7.10 | flashback database 로 복구 하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/flashback%20database%20%EB%A1%9C%20%EB%B3%B5%EA%B5%AC%20%ED%95%98%EB%8A%94%20%EB%B0%A9%EB%B2%95.txt)
 | 7.11 | flashback archive total recall 설정하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/flashback%20%20archive%20(total%20%20recall).txt)
 | 7.12 | 실수로 테이블 스페이스를 drop 했을때 불완전 복구하는 방법 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%8B%A4%EC%88%98%EB%A1%9C%20%ED%85%8C%EC%9D%B4%EB%B8%94%20%EC%8A%A4%ED%8E%98%EC%9D%B4%EC%8A%A4%EB%A5%BC%20drop%20%ED%96%88%EC%9D%84%20%EB%95%8C%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt)
-| 7.13 | 데이터 가드 구현하 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EA%B0%80%EB%93%9C%20%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0.txt)
+| 7.13 | 데이터 가드 구현하기 | [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EA%B0%80%EB%93%9C%20%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0.txt)
