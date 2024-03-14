@@ -2,13 +2,13 @@
 ▣ 예제57. flashback  archive (total  recall) 
 
 * flashback 기술 총정리                       
-                                                         복구할 때 사용하는 data 
+                                                   복구할 때 사용하는 data 
  1. flashback    database                          flashback  database  log
- 2. flashback    drop                               휴지통
- 3. flashback    table                               undo  data
- 4. flashback    Query                              undo  data
- 5. flashback    version  Query                   undo  data
- 6. flashback    transaction  Query              undo  data
+ 2. flashback    drop                              휴지통
+ 3. flashback    table                             undo  data
+ 4. flashback    Query                             undo  data
+ 5. flashback    version  Query                    undo  data
+ 6. flashback    transaction  Query                undo  data
  7. flashback    archive (total recall)            별도의 테이블 스페이스에 undo data 를 저장
 
 * flashback    archive (total  recall)  ?
@@ -26,8 +26,8 @@
 설명 그림: https://cafe.daum.net/oracleoracle/SoDd/365
 
 관련 설명:   flashback  archive 란  undo  tablespace 는 rollback 과 읽기 일관성을 보장하는
-               기능에만 충실하게 하고 flashback 은 별도의 테이블 스페이스를 만들어서
-               flashbakc 에 필요한 데이터를 저장하겠금 하는 기술입니다. 
+            기능에만 충실하게 하고 flashback 은 별도의 테이블 스페이스를 만들어서
+            flashbakc 에 필요한 데이터를 저장하겠금 하는 기술입니다. 
 
 ■ 실습
 
