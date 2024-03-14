@@ -1,0 +1,126 @@
+
+▣ 예제. 실수로 테이블 스페이스를 drop 했을 때 불완전 복구 방법
+
+순서
+순서:
+#1. ts708 테이블 스페이스를 생성합니다.
+#2. RMAN 으로 전체 백업을 수행합니다.
+#3. 로그스위치를 5번 수행합니다.
+#4. ts708 테이블 스페이스를 drop 합니다.
+#5. (복구) alert log file 을 열어서 drop 된 시간을 확인하시오.
+#6. (복구) shutdown immediate 한 후 startup nomount 합니다.
+#7. (복구) ts708 테이블 스페이스를 인식하고 있는 옛날 controlfile을 복원합니다.
+#8. (복구) alter  database mount  로 mount 로 올립니다.
+#9. (복구) ts708  테이블 스페이스가 drop 되기 전 10초전으로 불완전 복구를 합니다.
+#10. ts708 테이블 스페이스가 존재하는지 확인합니다. 
+
+구현:
+#1. ts708 테이블 스페이스를 생성합니다.
+
+SYS> create  tablespace  ts708 
+         datafile  '/home/oracle/ts708.dbf' size 10m;
+
+#2. RMAN 으로 전체 백업을 수행합니다.
+
+$ rman  target   sys/oracle_1234  nocatalog
+
+RMAN> backup  database  include  current  controlfile;
+
+RMAN> list  backup  of  controlfile;
+
+백업본 위치를 메모해놓습니다. 맨 아래에 최신 백업본을 메모하세요 !
+
+ /u01/app/oracle/flash_recovery_area/YYS/autobackup/2024_03_14/o1_mf_s_1163588356_lz4pho6c_.bkp
+
+#3. 로그스위치를 5번 수행합니다.
+
+SYS> @logsw
+SYS> @logsw
+SYS> @logsw
+SYS> @logsw
+SYS> @logsw
+
+#4. ts708 테이블 스페이스를 drop 합니다.
+
+SYS> drop   tablespace  ts708   including  contents  and  datafiles; 
+
+#5. (복구) alert log file 을 열어서 drop 된 시간을 확인하시오.
+
+SYS> show  parameter  background_dump_dest
+
+$ cd  /u01/app/oracle/diag/rdbms/yys/yys/trace
+$ ls  -l  alert*
+$ vi alert*
+
+Thu Mar 14 11:03:17 2024
+drop  tablespace ts708  including  contents and datafiles
+Deleted file /home/oracle/ts708.dbf
+Completed: drop  tablespace ts708  including  contents and datafiles
+
+2024-03-14:10:59:03  <--- drop 되기 10초전 
+
+#6. (복구) shutdown immediate 한 후 startup nomount 합니다.
+
+SYS> shutdown  immediate
+SYS> startup  nomount
+
+#7. (복구) ts708 테이블 스페이스를 인식하고 있는 옛날 controlfile을 복원합니다.
+
+$ rman   sys/oracle_1234  nocatalog
+
+RMAN> restore  controlfile  from '/u01/app/oracle/flash_recovery_area/YYS/autobackup/2024_03_14/o1_mf_s_1163588356_lz4pho6c_.bkp'; 
+
+ts708 테이블 스페이스를 알고 있는 controlfile 을 복원해서 복구를 해야됩니다. 
+현재 controlfile 은 이미 drop 이 되어버려서 복구가 필요없어서 복구가 안됩니다.
+
+#8. (복구) alter  database mount  로 mount 로 올립니다.
+
+RMAN> alter  database  mount;
+
+#9. (복구) ts708  테이블 스페이스가 drop 되기 전 10초전으로 불완전 복구를 합니다.
+
+RMAN> run { set  until  time='2024-03-14:10:59:03';
+                   restore   database;
+                   recover   database;
+                 } 
+
+#10.  resetlogs 옵션을 써서 db 를 올립니다. 
+
+RMAN> alter  database  open  resetlogs;
+
+#11. ts708 테이블 스페이스가 존재하는지 확인합니다. 
+
+SYS> select  tablespace_name  
+         from  dba_tablespaces
+         where  tablespace_name ='TS708';
+
+문제1.  데이터 가드 수업을 위해서  DBCA 로 현재 만들어져 있는 모든 database 를 다 
+         삭제하시오 !
+
+
+문제2.  prod db 는 따로 수동으로 drop database 하시오 !
+
+$ cd /u01/app/oracle/oradata
+$ ls
+ 
+prod 와 yys2 가 보일 텐데 여기서  prod 와 yys2 를 수동으로 drop 하겠습니다.
+
+#1.  . oraenv 해서 prod 쪽을 선택하세요.
+
+[yys:~]$ . oraenv
+ORACLE_SID = [yys] ? PROD
+ORACLE_HOME = [/home/oracle] ? /u01/app/oracle/product/11.2.0/dbhome_1
+
+#2.   mount 단계로 올립니다.
+
+PROD(SYS) > startup mount exclusive restrict
+
+#3.   drop  database 명령어로 drop 합니다. 
+
+PROD(SYS) > drop   database;
+
+#4.   os 에서 관련된 디렉토리와 파일들을 삭제합니다. 
+
+$ cd /u01/app/oracle/oradata
+
+$ rm -rf  PROD

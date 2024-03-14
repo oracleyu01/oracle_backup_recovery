@@ -1,0 +1,635 @@
+
+▣ 예제. 데이터 가드 구현하기 
+
+ 우리 회사에서 제일 중요한 데이터가 있는 메인 서버가 있는데
+ 이 메인 서버가 있는 서버실에 불이 나게 되면 
+ 알맨으로 열심히 백업을 많이 해놨어도 복구를 할 수 없는 상황이 됩니다.
+
+         primary   db  -----------------------------   standby   db 
+          
+            DB                                                   DB 
+           (대전)                                               (광주)
+
+           뉴욕 db    ----------------------------->   조지아주 db
+
+ 데이터 가드란 ? 운영중에 데이터 베이스가 하나 이상의 standby db 와
+                       연동하여 운영중인 데이터 베이스에서 발생할 수 있는
+                       오류와 손상으로 부터 데이터를 보호해주는 메커니즘 
+ 
+                      서버실 화제, 지진, 홍수, 테러로 인한 건물 붕괴로 인해서
+                      서버가 손상되었을때를 대배해서 원격에다가 별도의 서버를
+                      항상 준비를 시켜주는 메커니즘 
+ 
+        primary  db   ----------------------------   standby  db
+        
+       현재 운영중인 서버                             복구만 하고 있는 서버
+
+       archive  log file ----------------------->   복구를 하고 있는 상태
+
+$ cd /u01/app/oracle/oradata 
+$  ls
+
+      <--- PROD 라는 폴더만 없으면 됩니다. 
+
+
+■ Data guard 구성 방법
+
+ 1. primary db 를 구성 
+                   - 자동  <---- dbca 이용해서
+                                     silent 모드로 설치
+
+                   - 수동  <--- 이시간 (스크립트로 구현)
+
+ 2. standby db 를 구성 
+
+ 3. 가드 테스트 
+
+문제1. rcdb 를 삭제하시오 ~
+
+  $ dbca 
+
+■ primary db 를 구성
+ 
+   1. .bash_profile  을  구성해야한다.
+      ( 오라클로 접속하기 위한 환경구성 파일)
+
+     $ cd  엔터
+     $ vi .bash_profile
+
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/bin
+
+export PATH
+export JAVA_HOME=/usr/java/jdk1.6.0_18
+export PATH=$JAVA_HOME/bin:$PATH
+export PS1='[`echo $ORACLE_SID`:\W]$ '
+
+export ORACLE_BASE=/u01/app/oracle
+export ORACLE_SID=PROD
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1
+export PATH=$ORACLE_HOME/bin:$PATH
+unset LANG
+                  
+:%s/yys/PROD/g 
+
+[orcl:~]$ . .bash_profile
+[PROD:~]$ 
+
+   2. database 를 생성할 디렉토리를 생성한다.
+
+  $ mkdir  -p  /u01/app/oracle/oradata/PROD
+
+  $ cd  /u01/app/oracle/oradata/PROD
+
+  $ mkdir  disk1  disk2  disk3  disk4  disk5 
+
+  $ ls  
+
+
+   3. parameter file 을 만든다.
+ 
+cd $ORACLE_HOME/dbs
+vi $ORACLE_HOME/dbs/initPROD.ora
+
+--------------------------------------------------
+db_name = PROD
+compatible=11.2.0.1.0
+
+sga_target = 256M
+
+undo_management = AUTO
+undo_tablespace = UNDOTBS
+
+processes = 100
+
+remote_login_passwordfile = EXCLUSIVE
+ 
+control_files = (/u01/app/oracle/oradata/PROD/disk1/ctrl1.ctl ,
+                 /u01/app/oracle/oradata/PROD/disk2/ctrl2.ctl ,
+                 /u01/app/oracle/oradata/PROD/disk3/ctrl3.ctl )
+
+   4. instance 를  nomount 로 올린다.
+
+ $ sqlplus / as sysdba
+
+ SQL> startup  nomount  pfile=$ORACLE_HOME/dbs/initPROD.ora
+
+ SQL> select instance_name, status
+           from v$instance;
+
+ INSTANCE_NAME	 STATUS
+ ---------------- ------------
+ PROD		 STARTED
+
+   5. create database 스크립트를 수행한다.
+
+  * database 를 생성한다는것은 어떠한 파일들을 생성하면 db 가 생성되는 것인가 ?
+
+   1. data file
+   2. controlfile
+   3. redo log file
+   4. parameter file
+   5. archive log file
+   6. password file    
+
+ * database 를 수동으로 생성하는 스크립트를 수행하면 위의 파일중 3가지
+   가 생성된다.
+
+   1. data file
+   2. controlfile 
+   3. redo logfile
+
+create database PROD
+user sys identified by oracle
+user system identified by oracle
+datafile '/u01/app/oracle/oradata/PROD/disk1/system01.dbf' 
+size 100M autoextend on maxsize unlimited extent management local
+sysaux 
+datafile '/u01/app/oracle/oradata/PROD/disk2/sysaux01.dbf' 
+size 50M autoextend on maxsize unlimited
+default temporary tablespace temp
+tempfile '/u01/app/oracle/oradata/PROD/disk3/temp01.dbf' 
+size 50M autoextend on maxsize unlimited
+undo tablespace undotbs
+datafile '/u01/app/oracle/oradata/PROD/disk4/undotbs01.dbf' 
+size 50M autoextend on maxsize unlimited
+logfile 
+group 1 ('/u01/app/oracle/oradata/PROD/disk4/redoG1M1.rdo',
+        '/u01/app/oracle/oradata/PROD/disk5/redoG1M2.rdo') size 100M,
+group 2 ('/u01/app/oracle/oradata/PROD/disk4/redoG2M1.rdo',
+        '/u01/app/oracle/oradata/PROD/disk5/redoG2M2.rdo') size 100M,
+group 3 ('/u01/app/oracle/oradata/PROD/disk4/redoG3M1.rdo',
+        '/u01/app/oracle/oradata/PROD/disk5/redoG3M2.rdo') size 100M,
+group 4 ('/u01/app/oracle/oradata/PROD/disk4/redoG4M1.rdo',
+        '/u01/app/oracle/oradata/PROD/disk5/redoG4M2.rdo') size 100M,
+group 5 ('/u01/app/oracle/oradata/PROD/disk4/redoG5M1.rdo',
+         '/u01/app/oracle/oradata/PROD/disk5/redoG5M2.rdo') size 100M; 
+
+select instance_name, status
+      from v$instance;
+
+db 가 만들어지면서 open 상태로 올라왔습니다.
+
+
+   6. data dictionary 를 생성하는 스크립트를 수행한다. 
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catalog.sql
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catproc.sql
+
+  SQL>  connect  system/oracle
+
+  SQL> @$ORACLE_HOME/sqlplus/admin/pupbld.sql 
+
+  7.  PROD DB 에 운영 DATA 생성 
+
+   - scott 계정 생성하고  demobld 스크립트를 수행한다.
+
+
+   create  user  scott
+    identified  by  tiger;
+
+    grant  dba  to  scott;
+
+   connect scott/tiger
+
+   @demobld
+
+  - sqlplus 에서 vi 편집기를 실행할수 있도록 설정한다.
+
+   $ cd  $ORACLE_HOME/sqlplus/admin
+
+   $ vi  glogin.sql  
+
+     define _editor='vi'
+     set sqlprompt "_connect_identifier'('_user')' > "
+
+
+■ Standby  DB 구성 방법 
+
+  1. standby DB 생성시 필요한 환경을 Primary DB 에 설정해준다.
+  2. Primary DB 의 파라미터 파일을 수정한다.
+  3. Standby DB 를 위한 Directory 를 생성
+  4. 모든 datafile ,temp file 을 standby DB 로 전달
+  5. Primary DB 에서 standby DB 를 위한 controlfile 을 생성한후
+    전달한다. 
+
+
+  1. standby DB 생성시 필요한 환경을 Primary DB 에 설정해준다.
+
+  * DataGuard 를 구성하기 위해서 Primary  DB 쪽에 필요한 환경설정 3가지
+
+   1. Password file 인증방법이어야한다.
+   
+   SQL> show  parameter  remote_login_passwordfile
+
+remote_login_passwordfile	     string	 EXCLUSIVE
+
+   2. Archive  log  mode 여야한다.
+
+  SQL> archive  log list
+  SQL> shutdown  immediate
+  SQL> startup mount
+  SQL> alter  database  archivelog;
+  SQL> alter database open;
+  SQL> archive  log list
+
+   3. Force logging 이 활성화 되어 있어야한다.
+      ( 무조건 log 정보가 생기게 하겠다)
+
+    alter  table  emp  nologging;  <----- emp 테이블에 대해서 로그정보를
+                                                    생성하지 않겠다. 
+      
+    db 전체에 대해서 강제로 log 정보가 생성되도록 설정해줘야한다.
+
+  SQL>  alter  database  force  logging;  
+
+  SQL>  alter  database  add  supplemental  log  data
+           (primary key, unique  index)  columns;
+
+  * primary db 에서 수행한 dml 문장들이 저장이된다.
+
+  SQL> alter system  archive  log  current;
+
+  SQL> alter system  switch logfile;
+
+  SQL> select  name  from v$archived_log;
+
+  SQL> select  FORCE_LOGGING from v$database;
+
+2. Primary DB 의 파라미터 파일을 수정한다.
+
+ $ cd $ORACLE_HOME/dbs
+ $ vi  initPROD.ora
+
+ #맨 아래쪽에 아래의 내용을 추가한다.
+  
+ db_unique_name=PROD
+
+설명: primary db 쪽에 db_unique_name 을 PROD 라고 셋팅해야한다. 
+
+standby_file_management=auto
+
+설명:
+ # primary db 쪽에서 테이블 스페이스를 생성하면
+ # standby db 쪽에서도 똑같은 테이블 스페이스가 자동으로 
+ # 만들어지게 하는 파라미터 
+
+db_file_name_convert='/home/oracle/SBDB','/u01/app/oracle/oradata/PROD'
+     
+설명:       
+# Primary db쪽에는 data file 이 
+
+ /u01/app/oracle/oradata/PROD   <---- 이 위치에 있고
+
+ Standby db 쪽에는 data file 이
+
+ /home/oracle/SBDB   <--------- 이 위치에 있다는것을 알려줌 
+
+log_file_name_convert='/home/oracle/SBDB','/u01/app/oracle/oradata/PROD'
+
+설명: 
+# Primary db쪽에는 redo log file 이 
+
+ /u01/app/oracle/oradata/PROD   <---- 이 위치에 있고
+
+ Standby db 쪽에는 redo log file  이
+
+ /home/oracle/SBDB   <--------- 이 위치에 있다는것을 알려줌 
+
+log_archive_dest_1='location=/home/oracle/PROD/arch  valid_for=(all_logfiles,all_roles)'
+
+설명:  primary db 쪽에서 생성될 아카이브 로그 파일의 위치를 지정합니다.
+
+
+[PROD:~]$ cd 
+[PROD:~]$ mkdir PROD
+[PROD:~]$ cd PROD
+[PROD:PROD]$ mkdir arch
+[PROD:PROD]$ cd arch
+[PROD:arch]$ pwd
+/home/oracle/PROD/arch
+
+그리고 다시 $ORACLE_HOME/dbs 밑에 있는 initPROD.ora 를 엽니다. 
+
+ # primary db 쪽에 아카이브 로그 파일의 위치
+
+log_archive_dest_2='service=SBDB LGWR SYNC AFFIRM 
+   valid_for=(online_logfiles,primary_role)' 
+
+ # standby db 쪽에 생성할 아카이브 로그파일의 위치 
+
+#fal_server=SBDB
+#fal_client=PROD
+
+# 나중에 primary db 가 standby db 가 될수있기 때문에 미리 적어놓은 
+  파라미터
+
+ 3. Standby DB 를 위한 Directory 를 생성
+  
+  $ mkdir -p /home/oracle/SBDB  
+
+ 4. 모든 datafile ,temp file 을 standby DB 로 전달
+
+  SQL> shutdown  immediate
+
+  $ cp -rp  /u01/app/oracle/oradata/PROD/*  /home/oracle/SBDB
+
+ 5. Primary db 쪽에 아카이브 로그 파일과 flasback database log 가
+   저장될 위치를 생성하시오 ~
+
+ $ mkdir  -p  /home/oracle/PROD/arch   <--- 아카이브 로그파일 위치
+ $ mkdir  -p  /home/oracle/PROD/flash  <--  flashback database log 위치
+
+ 6. standby db 쪽에 아카이브 로그 파일과 flasback database log 가
+   저장될 위치를 생성하시오 ~
+
+ $ mkdir -p  /home/oracle/SBDB/arch
+ $ mkdir -p  /home/oracle/SBDB/flash
+
+  
+  * Primary db ----------------------> standby db  넘겨줘야할 파일
+
+   1. 모든 datafile 들 
+   2. tempfile  
+   3. redo log file 
+
+   4. standby 용 controlfile --------------->  
+
+ 7. PROD DB 를 mount 로 올리고 standby 용 controlfile 을 생성한다.
+
+  SQL> startup  mount
+
+  SQL> alter  database  create  standby  controlfile
+          as  '$HOME/physical.ctl' reuse; 
+
+ 8. Primary DB 쪽에서 생성한 standby 용 controlfile 을 
+    Standby 쪽으로 넘겨준다.
+
+  $ cp $HOME/physical.ctl  /home/oracle/SBDB/disk1/ctrl1.ctl
+  $ cp $HOME/physical.ctl  /home/oracle/SBDB/disk2/ctrl2.ctl
+  $ cp $HOME/physical.ctl  /home/oracle/SBDB/disk3/ctrl3.ctl
+
+ 9. 리스너가 인식하고 있는 서비스가 무엇인지 확인한다.
+    동적 서비스 등록을 정적 서비스 등록으로 변경합니다. 
+
+ $ lsnrctl  status 
+
+ $ cd $ORACLE_HOME/network/admin
+
+ $ mv  listener.ora  listener.bak
+
+ $ vi  listener.ora 
+
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.19.60)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )
+
+SID_LIST_LISTENER=
+  (SID_LIST =
+    (SID_DESC =
+      (ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1)
+      (SID_NAME=PROD)
+     )
+    (SID_DESC =
+      (ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_1)
+      (SID_NAME=SBDB)
+     )
+   )
+
+ $ lsnrctl  stop
+ $ lsnrctl  start
+
+Services Summary...
+Service "PROD" has 1 instance(s).
+  Instance "PROD", status UNKNOWN, has 1 handler(s) for this service...
+Service "SBDB" has 1 instance(s).
+  Instance "SBDB", status UNKNOWN, has 1 handler(s) for this service...
+The command completed successfully
+
+10. tnsnames.ora 파일의 아래의 내용을 추가한다. 
+
+ $ cd  $ORACLE_HOME/network/admin
+ $ vi  tnsnames.ora 
+
+PROD =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.19.60)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = PROD)
+    )
+  )
+
+SBDB =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.19.60)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = SBDB)
+    )
+  )
+
+11. PROD 와 SBDB 를 위한 패스워드 파일 생성 
+ 
+  $ cd  $ORACLE_HOME/dbs
+
+  $ orapwd  file=orapwSBDB  password=oracle  ignorecase=Y
+  
+  $ orapwd  file=orapwPROD  password=oracle  ignorecase=Y
+
+ 설명 :  패스워드파일을 생성하는 이유는 원격에서 리스너 통해서
+         sys 유져로 접속하려고 생성
+
+         ignorecase=Y 는 패스워드 oracle 을 대문자로 쓰든 소문자로 쓰든
+         상관없이 접속하게 하겠다.
+
+ 12. 위에서 구성한 nework 설정이 정상인지 확인하시오 ~
+
+  $ sqlplus  sys/oracle@prod as sysdba
+  $ sqlplus  sys/ORACLE@prod as sysdba
+  $ sqlplus  sys/oracle@sbdb as sysdba
+  $ sqlplus  sys/ORACLE@sbdb as sysdba
+
+ 13. .bash_profile 을 열어서 prod 와 sbdb 로 접근하기 위한 
+      alias 를 생성한다.
+
+   $ cd
+   $ vi  .bash_profile
+
+     alias  prod='export ORACLE_SID=PROD'
+     alias  sbdb='export ORACLE_SID=SBDB'
+
+   $ source  .bash_profile
+
+   $ prod
+   $ sqlplus / as  sysdba
+
+  SQL> select instance_name, status from v$instance;
+  SQL> shutdown  immediate
+  SQL> startup  mount 
+
+
+ 14. SBDB  용 파라미터 파일 구성 
+
+   $ cd $ORACLE_HOME/dbs
+
+   $ vi  initSBDB.ora
+
+
+compatible=11.2.0.1.0
+control_files = (/home/oracle/SBDB/disk1/ctrl1.ctl ,
+                 /home/oracle/SBDB/disk2/ctrl2.ctl ,
+                 /home/oracle/SBDB/disk3/ctrl3.ctl )
+db_block_size=8192
+db_name=PROD
+service_names=SBDB
+global_names=true
+job_queue_processes=10
+open_cursors=500
+processes=100
+remote_login_passwordfile='EXCLUSIVE'
+sga_max_size=120M
+sga_target=120M
+undo_management='AUTO'
+undo_tablespace='UNDOTBS'
+db_recovery_file_dest_size=4G
+db_recovery_file_dest=/home/oracle/SBDB/flash
+db_unique_name=SBDB
+standby_file_management=auto
+db_file_name_convert='/u01/app/oracle/oradata/PROD','/home/oracle/SBDB'
+log_file_name_convert='/u01/app/oracle/oradata/PROD','/home/oracle/SBDB'
+log_archive_dest_1='location=/home/oracle/SBDB/arch valid_for=(all_logfiles, all_roles)'
+log_archive_dest_2='service=PROD LGWR SYNC AFFIRM valid_for=(online_logfiles, primary_role)'
+#standby_archive_dest=/home/oracle/SBDB/arch
+#recovery_parallelism=4
+fal_server=PROD
+fal_client=SBDB
+
+ ※ standby DB 쪽에서 반드시 활성화 되어져야하는 파라미터
+
+  1. fal_server=PROD  ----> 아카이브 로그파일을 보내줘야하는 DB
+
+  2. fal_client=SBDB  ----> 아카이브 로그파일을 받아야하는 DB 
+
+   PROD --------------------------------------> SBDB
+              archive  log  file  
+
+
+
+ 15. standby 용 redo log file 을 prod 와 sbdb 에서 각각 생성
+
+  1. prod
+
+  alter  database  add   standby  logfile
+  '/u01/app/oracle/oradata/PROD/disk1/standby01.log'  size  10m;
+
+  alter  database  add   standby  logfile
+  '/u01/app/oracle/oradata/PROD/disk1/standby02.log'  size  10m;
+
+ 2. sbdb 
+
+  $ sbdb
+  $ sqlplus / as sysdba
+
+  SQL> startup
+
+  SQL> 
+  alter  database  add   standby  logfile
+  '/home/oracle/SBDB/disk1/standby01.log'  size  10m;
+
+  alter  database  add   standby  logfile
+  '/home/oracle/SBDB/disk1/standby02.log'  size  10m;
+
+
+  16.  PROD 와 SBDB 의 PMON 이 잘 떠있는지 확인한다.
+
+       ps -ef |grep pmon
+ 
+       prod           sbdb 
+ 
+       mount          open 
+
+
+ ------ 여기서 부터가 중요  (sbdb 를 복구모드로 변환하는 작업)
+
+  17. standby 디비인 SBDB 를 복구모드로 변환한다.
+
+ - SBDB 에서 수행한다.
+
+  SBDB(SYS) > shutdown  immediate
+  SBDB(SYS) > startup  mount
+
+  SBDB(SYS) > alter  database  flashback  on;
+
+ -- MRP(Media Recovery Process) 가 떠있는지 확인하기위해 아래의 작업수행
+
+  SBDB(SYS) > select process, status  from  v$managed_standby;
+
+                 <---- MRP 가 지금은 아직 안뜬다.
+
+ -- 복구모드로 변환하는 명령어를 수행한다.
+
+ SBDB(SYS) > recover  managed  standby  database  disconnect;
+
+  SBDB(SYS) > select process, status  from  v$managed_standby;
+
+                 <---- MRP 가 지금 뜬다.
+
+ 18. prod 와 sbdb 쪽에서 각각 아래의 명령어를 수행해서
+     datafile 의 갯수가 똑같은지 확인하시오 !
+
+  - prod
+
+    select  name from v$datafile;
+
+  - sbdb  
+ 
+    select  name from  v$datafile;
+
+ 19. prod 쪽 db 를 올리고 테이블스페이스를 생성해서 
+     standby db 로 넘어가서 반영되는지 확인한다.
+
+  - prod
+
+    SQL> alter  database  open;
+
+    SQL> create tablespace  ts9000
+           datafile  '/u01/app/oracle/oradata/PROD/disk2/ts900.dbf'
+          size 10m;
+
+ 20. 아래의 작업을 양쪽에서 각각 수행한다. 
+  - prod
+
+    select  name from v$datafile;
+
+  - sbdb  
+ 
+    select  name from  v$datafile;
+
+  primary  db 은 open 된 상태이고 standby db 는 mount 상태입니다.
+  standby db는 mount 에서 계속 복구만 합니다.
+
+문제1.  prod 쪽에서  테이블 스페이스를 다음과 같이 생성하고 sbdb 쪽에
+         관련 테이블 스페이스가 똑같이 만들어지는지 확인하시오 !
+
+PROD(SYS) > create tablespace  ts801
+           datafile  '/u01/app/oracle/oradata/PROD/disk2/ts801.dbf' size 10m;
+
+PROD(SYS) > alter system switch logfile;
+
+PROD(SYS) > alter system checkpoint;
+
+PROD(SYS) > select  name from v$datafile;
