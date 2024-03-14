@@ -1,0 +1,180 @@
+
+▣ 예제57. flashback  archive (total  recall) 
+
+* flashback 기술 총정리                       
+                                                         복구할 때 사용하는 data 
+ 1. flashback    database                          flashback  database  log
+ 2. flashback    drop                               휴지통
+ 3. flashback    table                               undo  data
+ 4. flashback    Query                              undo  data
+ 5. flashback    version  Query                   undo  data
+ 6. flashback    transaction  Query              undo  data
+ 7. flashback    archive (total recall)            별도의 테이블 스페이스에 undo data 를 저장
+
+* flashback    archive (total  recall)  ?
+
+   이름 그대로 flashback 으로 완전히 과거로 되돌리는것을 확실하게 보장해주는 기능 
+
+   원래는 완전히 과거로 돌아가는것을 보장하지는 않습니다.
+
+   undo_retention   파라미터의 설정값 (15분) 만큼만 되돌리 수 있고
+  이것도  사용중인 undo tablespace 의  retention 을 보장해줘야지만 가능한것입니다.
+
+예:  delete  from  emp;
+      commit;  
+
+설명 그림: https://cafe.daum.net/oracleoracle/SoDd/365
+
+관련 설명:   flashback  archive 란  undo  tablespace 는 rollback 과 읽기 일관성을 보장하는
+               기능에만 충실하게 하고 flashback 은 별도의 테이블 스페이스를 만들어서
+               flashbakc 에 필요한 데이터를 저장하겠금 하는 기술입니다. 
+
+■ 실습
+
+순서
+#1.  undo retention 을 1초로 변경합니다.
+#2.  db를 종료후 다시 재시작 시킵니다.
+#3.  flashback archive 를 가능하게할 테이블 스페이스를 생성합니다.
+#4.  flashback  archive 를 관리할 유져를 생성합니다.
+#5.  flashback  archive 를 생성합니다.
+#6.  flashback  archive 를 사용할 수 있는 권한을 scott 에게 부여합니다.
+#7.  scott 유져에서 emp 테이블이 total  recall 이 되겠금 설정합니다. 
+#8.  emp 테이블을 전부 지우고 commit 합니다. 
+#9.  (복구) emp 테이블을 delete 전으로 되돌립니다. 
+#10. emp 테이블을 flashback  archive 대상에서 제외합니다. 
+
+구현
+#1.  undo retention 을 1초로 변경합니다.
+
+SYS> alter  system  set  undo_retention = 1;
+
+#2.  db를 종료후 다시 재시작 시킵니다.
+
+SYS> shutdown  immediate
+SYS> startup
+
+#3.  flashback archive 를 가능하게할 테이블 스페이스를 생성합니다.
+
+SYS> create  tablespace  ts707
+          datafile  '/home/oracle/ts707.dbf'  size  100m;
+
+#4.  flashback  archive 를 관리할 유져를 생성합니다.
+
+SYS> create  user  flash_admin
+        identified  by  flash_admin
+        default   tablespace   ts707;
+
+SYS> grant  connect, resource  to  flash_admin;
+SYS> grant  flashback  archive  administer  to  flash_admin;
+
+#5.  flashback  archive 를 생성합니다.
+
+SYS> connect  flash_admin/flash_admin
+
+flash_admin>  create  flashback  archive  flasharch1
+                     tablespace  ts707
+                     retention   1  year;
+
+설명:  1년동안 flashback 시킬 수 있는 상태가 됩니다. 
+
+#6.  flashback  archive 를 사용할 수 있는 권한을 scott 에게 부여합니다.
+
+flash_admin> grant  flashback  archive   on  flasharch1  to  scott; 
+
+#7.  scott 유져에서 emp 테이블이 total  recall 이 되겠금 설정합니다. 
+
+connect  scott/tiger
+
+scott>  alter  table  emp  flashback   archive  flasharch1; 
+
+scott>  select  *
+          from user_flashback_archive_tables; 
+
+#8.  emp 테이블을 전부 지우고 commit 합니다. 
+
+scott>  delete   from  emp;
+scott>  commit;
+
+#9.  (복구) emp 테이블을 delete 전으로 되돌립니다. 
+
+scott>  alter   table   emp   enable  row  movement; 
+
+scott> select  systimestamp  from  dual;
+
+scott> flashback   table  emp  to  timestamp
+         to_timestamp('2024-03-14:10:10:00', 'RRRR-MM-DD:HH24:MI:SS');
+
+#10. emp 테이블을 flashback  archive 대상에서 제외합니다. 
+
+scott> alter  table   emp  no  flashback  archive;
+
+scott> select  *
+           from  user_flashback_archive_tables;
+
+문제1.  scott 이 가지고 있는 테이블 전부를 flashback archive 대상이 되게 하시오.
+
+scott> select  table_name 
+          from  user_tables; 
+
+답: 
+
+  alter  table  emp  flashback   archive  flasharch1; 
+
+scott> set pages 400
+
+scott> select  'alter   table   '  ||  table_name  ||  '  flashback  archive  flasharch1; '
+           from   user_tables;
+
+alter   table   EMP  flashback  archive  flasharch1;
+alter   table   BONUS  flashback  archive  flasharch1;
+alter   table   SALGRADE  flashback  archive  flasharch1;
+alter   table   EMP05  flashback  archive  flasharch1;
+alter   table   EMP022  flashback  archive  flasharch1;
+alter   table   EMP_CUPPANG  flashback  archive  flasharch1;
+alter   table   EMP400  flashback  archive  flasharch1;
+alter   table   EMP07  flashback  archive  flasharch1;
+alter   table   EMP81  flashback  archive  flasharch1;
+alter   table   EMP82  flashback  archive  flasharch1;
+alter   table   EMP83  flashback  archive  flasharch1;
+alter   table   EMP91  flashback  archive  flasharch1;
+alter   table   EMP2  flashback  archive  flasharch1;
+alter   table   EMP702  flashback  archive  flasharch1;
+alter   table   EMP600  flashback  archive  flasharch1;
+alter   table   EMP600B  flashback  archive  flasharch1;
+alter   table   EMP007  flashback  archive  flasharch1;
+alter   table   SYS_TEMP_FBT  flashback  archive  flasharch1;
+
+문제2.  그럼 다시 위의 테이블들을 flashback  archive 대상에서 제외 시키시오 !
+
+  alter  table   emp  no  flashback  archive;
+
+답:   select  ' alter   table   '  ||  table_name  ||  '  no flashback  archive;' 
+          from   user_tables;
+ 
+ alter   table   EMP  no flashback  archive;
+ alter   table   BONUS  no flashback  archive;
+ alter   table   SALGRADE  no flashback  archive;
+ alter   table   EMP05  no flashback  archive;
+ alter   table   EMP022  no flashback  archive;
+ alter   table   EMP_CUPPANG  no flashback  archive;
+ alter   table   EMP400  no flashback  archive;
+ alter   table   EMP07  no flashback  archive;
+ alter   table   EMP81  no flashback  archive;
+ alter   table   EMP82  no flashback  archive;
+ alter   table   EMP83  no flashback  archive;
+ alter   table   EMP91  no flashback  archive;
+ alter   table   EMP2  no flashback  archive;
+ alter   table   EMP702  no flashback  archive;
+ alter   table   EMP600  no flashback  archive;
+ alter   table   EMP600B  no flashback  archive;
+ alter   table   EMP007  no flashback  archive;
+ alter   table   SYS_TEMP_FBT  no flashback  archive;
+
+문제3.  flash_admin 유져를 drop 하시오 !  
+
+yys(SYS) > drop user flash_admin cascade;
+
+문제4.  ts707 테이블 스페이스를 drop 하시오 !
+
+yys(SYS) > drop   tablespace   ts707  including  contents  and  datafiles;
+
