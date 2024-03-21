@@ -8,7 +8,7 @@
 
 아래의 내용을 순서대로 보시면 됩니다.
 
-## 수업 자료
+## 수업 자료( ☀️ 2024년 3월 22일 updated)
 
 ### 1. 사용자 관리 백업하기
 - 1.1 아카이브 모드로 변경하기:📄 [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%20%EB%AA%A8%EB%93%9C%20%EB%B3%80%EA%B2%BD.txt)
