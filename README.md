@@ -11,7 +11,7 @@
 ## 수업 자료( ☀️ 2024년 3월 22일 updated)
 
 ### 1. 사용자 관리 백업하기
-- 1.1 아카이브 모드로 변경하기:📄 [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%20%EB%AA%A8%EB%93%9C%20%EB%B3%80%EA%B2%BD.txt)
+- 1.1 아카이브 모드로 변경하기:⚡ [설명그림](https://github.com/oracleyu01/oracle_admin/blob/main/%EC%98%A4%EB%9D%BC%ED%81%B4%20%EA%B8%B0%EB%B3%B8%20%EA%B5%AC%EC%A1%B0.png) 📄 [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%20%EB%AA%A8%EB%93%9C%20%EB%B3%80%EA%B2%BD.txt)
 - 1.2 cold backup 수행하기: 📄[관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/cold%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt)
 - 1.3 hot backup 수행하기: 📄[관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EC%82%AC%EC%9A%A9%EC%9E%90%20%EA%B4%80%EB%A6%AC%20hot%20backup%20%EC%88%98%ED%96%89%ED%95%98%EA%B8%B0.txt)
 - 1.4 control file 백업하기: 📄 [관련 코드](https://github.com/oracleyu01/oracle_backup_recovery/blob/main/controlfile%20%20hotbackup%20%ED%95%98%EA%B8%B0.txt)
