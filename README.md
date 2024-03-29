@@ -10,8 +10,6 @@
 
 아래의 내용을 순서대로 보시면 됩니다.
 
-아래의 수업 내용은 곧 [이지업 클래스](https://easyupclass.e-itwill.com/main/index.jsp) 온라인 강의에서 만나시게됩니다.
-
 ## 수업 자료( ☀️ 2024년 3월 22일 updated)
 
 ### 1. 사용자 관리 백업하기
@@ -86,7 +84,7 @@
 
 &nbsp;  
 
-위의 수업 내용은 곧 [이지업 클래스](https://easyupclass.e-itwill.com/main/index.jsp) 온라인 강의에서 만나시게됩니다.
+위의 수업 내용은  [이지업 클래스](https://easyupclass.e-itwill.com/main/index.jsp) 온라인 강의에서 곧 만나시게 되실수 있습니다.
 
 &nbsp;  
 
