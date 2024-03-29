@@ -1,5 +1,7 @@
 # 오라클 백업과 복구 가이드
 
+<img src="https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B0%B1%EC%97%85%EA%B3%BC-%EB%B3%B5%EA%B5%AC-001.png" width="600" height="400">
+
 안녕하세요, 여러분! 🌟
 
 오라클 dba와 오라클 엔지니어를 준비하시는 여러분들을 위해 오라클 백업과 복구 수업 스크립트를 정리하였습니다.
