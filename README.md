@@ -84,6 +84,10 @@
 
 &nbsp;  
 
+위의 수업 자료는 곧 [이지업 클래스](https://easyupclass.e-itwill.com/main/index.jsp) 온라인 강의에서 만나시게됩니다.
+
+&nbsp;  
+
 &nbsp;  
 
 &nbsp;  
