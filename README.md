@@ -1,6 +1,6 @@
 # 오라클 백업과 복구 가이드
 
-<img src="https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B0%B1%EC%97%85%EA%B3%BC-%EB%B3%B5%EA%B5%AC-001.png" width="600" height="400">
+<img src="https://github.com/oracleyu01/oracle_backup_recovery/blob/main/%EB%B0%B1%EC%97%85%EA%B3%BC-%EB%B3%B5%EA%B5%AC-001.png" width="500" height="600">
 
 안녕하세요, 여러분! 🌟
 
