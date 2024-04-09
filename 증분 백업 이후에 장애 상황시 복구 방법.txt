@@ -31,6 +31,9 @@ sys> select  file_id, block_id
 
 #4. 해당 블럭을 손상 시킵니다.
 
+아래의 블럭 시키는 쉘을 다운로드 받습니다.
+다운로드 주소: https://cafe.daum.net/oracleoracle/SoDd/312
+
 $ cd
 $ ./lab_07_02.sh  /u01/app/oracle/oradata/yys/ts07b.dbf  136 8192
 
